@@ -94,7 +94,6 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.Date:
                             {
-                                CultureInfo provider = CultureInfo.InvariantCulture;
                                 DateTime dt = DateTime.MinValue;
                                 string[] supportedDateTimeFormats = { "yyyy-MM-dd" };
                                 bool success = false;
@@ -117,7 +116,6 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.Time:
                             {
-                                CultureInfo provider = CultureInfo.InvariantCulture;
                                 DateTime dt = DateTime.MinValue;
                                 string[] supportedDateTimeFormats = { "HH:mm:ss" };
                                 bool success = false;

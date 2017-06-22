@@ -21,6 +21,7 @@ namespace ExcelToTable
             string fileext = ".txt";
             string text = string.Empty;
 
+            #region Define permitted arguments
             List<SimpleArg> supportedArgs = new List<SimpleArg>();
             supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.String });
             supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = true, DefaultValue = "html", ArgType = SimpleArgType.String });
@@ -30,7 +31,9 @@ namespace ExcelToTable
             supportedArgs.Add(new SimpleArg { Name = "-v", IsSwitch = true, Required = false });
             supportedArgs.Add(new SimpleArg { Name = "-speed", IsSwitch = true, Required = false });
             supportedArgs.Add(new SimpleArg { Name = "-hello", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String });
+            #endregion
 
+            #region Parse  and validate arguments
             Dictionary<string, dynamic> ar = new Dictionary<string, dynamic>();
             try
             {
@@ -38,33 +41,39 @@ namespace ExcelToTable
             }
             catch (Exception ex)
             {
-                Console.WriteLine(String.Format("Error: {0}", ex.Message));
+                Console.WriteLine(ex.Message);
                 ShowUsage();
                 return;
             }
 
-            Console.WriteLine("Successfully parsed args");
+            //Fix for filename ->abs filename - for case where app is called via batch file
             if (!System.IO.Path.IsPathRooted(ar["-filename"]))
             {
                 ar["-filename"] = System.IO.Path.GetFullPath(ar["-filename"]);
             }
 
-         
-            if (!ValidateArgs(ar))
+            try
             {
+                ValidateArgs(ar);
+            }
+            catch(ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+                ShowUsage();
                 return;
             }
+            #endregion
 
-
+            #region Read excel file
             rows = ReadExcelRows(ar["-filename"], out rc, out ResultDesc, ar["-worksheet"]);
             if (rc == ResultCode.ErrorOpeningFile)
             {
                 Console.WriteLine(String.Format("ErrorOpeningFile: {0}", ResultDesc));
                 return;
             }
-            
+            #endregion
 
-
+            #region Output result
             if (ar["-format"] == "wikitable")
             {
                 text = RowsToWikiTable(rows);
@@ -77,6 +86,7 @@ namespace ExcelToTable
             }
 
             System.IO.File.WriteAllText(System.IO.Path.GetFileName(ar["-filename"]) + fileext, text);
+            #endregion
         }
 
         #region Argument stuff
@@ -88,57 +98,19 @@ namespace ExcelToTable
             Console.WriteLine(Environment.NewLine);
         }
 
-        private static Dictionary<string, string> ParseArgs(string[] args)
-        {
-            Dictionary<string, string> parsedArgs = new Dictionary<string, string>();
-            //preload optional args
-            parsedArgs.Add("worksheet", "1");
-            parsedArgs.Add("format", "wikitable");
-
-            foreach (string s in args)
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(s, "worksheet=([0-9])");
-                if (match.Success)
-                {
-                    parsedArgs["worksheet"] = match.Groups[1].Value;
-                    continue;
-                }
-                else if (System.IO.File.Exists(s))
-                {
-                    parsedArgs.Add("inputfile", s);
-                    continue;
-                }
-
-                match = System.Text.RegularExpressions.Regex.Match(s, "format=(html|wikitable)");
-                if (match.Success)
-                {
-                    parsedArgs["format"] = match.Groups[1].Value;
-                    continue;
-                }
-            }
-
-            return parsedArgs;
-        }
-
         private static bool ValidateArgs(Dictionary<string, dynamic> ar)
         {
             if (!ar.ContainsKey("-filename"))
             {
-                Console.WriteLine("Missing parameter -filename : Must provide input file path");
-                ShowUsage();
-                return false;
+                throw new ArgumentException("Missing parameter -filename : Must provide input file path");
             }
             else if (!System.IO.File.Exists(ar["-filename"]))
             {
-                Console.WriteLine(String.Format("Input file '{0}' does not exist", ar["-filename"]));
-                ShowUsage();
-                return false;
+                throw new ArgumentException(String.Format("Input file '{0}' does not exist", ar["-filename"]));
             }
-
-            if ("html|wikitable".IndexOf(ar["-format"]) < 0)
+            else if ("html|wikitable".IndexOf(ar["-format"]) < 0)
             {
-                Console.WriteLine(String.Format("Output format '{0}' is not valid", ar["-format"]));
-                return false;
+                throw new ArgumentException(String.Format("Output format '{0}' is not valid", ar["-format"]));
             }
 
             return true;
