@@ -8,15 +8,27 @@ using System.Globalization;
 
 namespace ExcelToTable
 {
-    public static class SimpleArgParser
+    public class SimpleArgParser
     {
-        public static Dictionary<string, dynamic> ParseArgs(string[] Args, List<SimpleArg> SupportedArgs)
+        private List<SimpleArg> _SupportedArgs;
+        private List<SimpleArg> _RequiredArgs;
+        private List<SimpleArg> _SupportedSwitches;
+        private List<SimpleArg> _OptionalArgsWithDefaultValue;
+        public SimpleArgParser(List<SimpleArg> SupportedArgs)
+        {
+            _SupportedArgs = SupportedArgs;
+            _RequiredArgs = _SupportedArgs.Where(sa => sa.Required == true).ToList();
+            _OptionalArgsWithDefaultValue = _SupportedArgs.Where(sa => (sa.Required == false) && (sa.DefaultValue!=null)).ToList();
+            _SupportedSwitches = _SupportedArgs.Where(sa => sa.IsSwitch == true).ToList();
+        }
+
+        public Dictionary<string, dynamic> ParseArgs(string[] Args)
         {
             List<string> SuppliedSwitches = new List<string>();
-            List<SimpleArg> supportedSwitches = SupportedArgs.Where(sa => sa.IsSwitch == true).ToList();
             List<string> argsList = Args.ToList<string>();
 
-            foreach (var supportedSwitch in supportedSwitches)
+            //Remove Switches before key pair matching
+            foreach (var supportedSwitch in _SupportedSwitches)
             {
                 var ind = argsList.IndexOf(supportedSwitch.Name);
                 if (ind >= 0)
@@ -27,14 +39,16 @@ namespace ExcelToTable
             }
 
             Dictionary<string, dynamic> parsedArgs = new Dictionary<string, dynamic>();
-
             for (int i = 0; i < argsList.Count; i+=2)
             {
-                if(parsedArgs.ContainsKey(argsList[i])) continue;
+                if (parsedArgs.ContainsKey(argsList[i]))
+                {
+                    continue;
+                }
 
                 if(i<argsList.Count-1)
                 {
-                    var supportedArg = SupportedArgs.Where(sa => sa.Name == argsList[i]).FirstOrDefault();
+                    var supportedArg = _SupportedArgs.Where(sa => sa.Name == argsList[i]).FirstOrDefault();
                     if(supportedArg==null)
                     {
                         throw new ArgumentException(String.Format("Argument not supported: {0}", argsList[i]));
@@ -171,31 +185,30 @@ namespace ExcelToTable
                 parsedArgs.Add(s, null);
             }
 
+            //Add defaults for optional args not passed
+            foreach(var optionalArg in _OptionalArgsWithDefaultValue)
+            {
+                if(!parsedArgs.ContainsKey(optionalArg.Name))
+                {
+                    parsedArgs.Add(optionalArg.Name, optionalArg.DefaultValue);
+                }
+            }
 
             return parsedArgs;
         }
 
-        public static List<string> GetMatches(string s)
+        public void ValidateArgs(Dictionary<string, dynamic> Arguments)
         {
-            List<string> matchValues = new List<string>();
-            MatchCollection matches = Regex.Matches(s, "\\\"(.|\\n)*?\\\"", RegexOptions.None);
-            foreach (Match match in matches)
+            if(_RequiredArgs != null)
             {
-                if (match.Success)
+                foreach(var pa in _RequiredArgs)
                 {
-                    matchValues.Add(match.Value);
+                    if(!Arguments.ContainsKey(pa.Name))
+                    {
+                        throw new ArgumentException(String.Format("Required argument {0} not provided", pa.Name));
+                    }
                 }
             }
-
-            matches = Regex.Matches(s, "\\'(.|\\n)*?\\'", RegexOptions.None);
-            foreach (Match match in matches)
-            {
-                if (match.Success)
-                {
-                    matchValues.Add(match.Value);
-                }
-            }
-            return matchValues;
         }
     }
 

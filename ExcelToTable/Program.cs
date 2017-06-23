@@ -25,8 +25,9 @@ namespace ExcelToTable
             List<SimpleArg> supportedArgs = new List<SimpleArg>();
             supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.String });
             supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = true, DefaultValue = "html", ArgType = SimpleArgType.String });
-            supportedArgs.Add(new SimpleArg { Name = "-range", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.String });
             supportedArgs.Add(new SimpleArg { Name = "-worksheet", IsSwitch = false, Required = false, DefaultValue = 1, ArgType = SimpleArgType.Integer });
+
+            supportedArgs.Add(new SimpleArg { Name = "-range", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String });
             supportedArgs.Add(new SimpleArg { Name = "-fromdate", IsSwitch = false, Required = false, DefaultValue = DateTime.MinValue, ArgType = SimpleArgType.DateTime });
             supportedArgs.Add(new SimpleArg { Name = "-v", IsSwitch = true, Required = false });
             supportedArgs.Add(new SimpleArg { Name = "-speed", IsSwitch = true, Required = false });
@@ -34,10 +35,14 @@ namespace ExcelToTable
             #endregion
 
             #region Parse  and validate arguments
+            
+            SimpleArgParser parser = new SimpleArgParser(supportedArgs);
+
             Dictionary<string, dynamic> ar = new Dictionary<string, dynamic>();
             try
             {
-                ar = SimpleArgParser.ParseArgs(args, supportedArgs);
+                ar = parser.ParseArgs(args);
+                parser.ValidateArgs(ar);
             }
             catch (Exception ex)
             {
@@ -54,7 +59,7 @@ namespace ExcelToTable
 
             try
             {
-                ValidateArgs(ar);
+                ValidateAppArgs(ar);
             }
             catch(ArgumentException ex)
             {
@@ -79,11 +84,23 @@ namespace ExcelToTable
                 text = RowsToWikiTable(rows);
                 fileext = ".txt";
             }
+            else if (ar["-format"] == "jsonsobjects")
+            {
+                text = RowsToJSON_ArrayOfObjects(rows);
+                fileext = ".objects.json";
+            }
+            else if (ar["-format"] == "jsonarrays")
+            {
+                text = RowsToJSON_ArrayOfArrays(rows);
+                fileext = ".arrays.json";
+            }
             else
             {
                 text = RowsToHTMLTable(rows);
                 fileext = ".html";
             }
+
+            
 
             System.IO.File.WriteAllText(System.IO.Path.GetFileName(ar["-filename"]) + fileext, text);
             #endregion
@@ -92,13 +109,13 @@ namespace ExcelToTable
         #region Argument stuff
         private static void ShowUsage()
         {
-            Console.WriteLine(String.Format("Usage: {0} [excelfilename] worksheet=[1-n] format=[html|wikitable]", System.AppDomain.CurrentDomain.FriendlyName));
+            Console.WriteLine(String.Format("Usage: {0} [excelfilename] worksheet=[1-n] format=[html|wikitable|jsonarrays|jsonsobjects]", System.AppDomain.CurrentDomain.FriendlyName));
             Console.WriteLine("worksheet is optional. Defaults to 1");
             Console.WriteLine("format is optional. Defaults to wikitable");
             Console.WriteLine(Environment.NewLine);
         }
 
-        private static bool ValidateArgs(Dictionary<string, dynamic> ar)
+        private static bool ValidateAppArgs(Dictionary<string, dynamic> ar)
         {
             if (!ar.ContainsKey("-filename"))
             {
@@ -108,7 +125,7 @@ namespace ExcelToTable
             {
                 throw new ArgumentException(String.Format("Input file '{0}' does not exist", ar["-filename"]));
             }
-            else if ("html|wikitable".IndexOf(ar["-format"]) < 0)
+            else if ("html|wikitable|jsonarrays|jsonsobjects".IndexOf(ar["-format"]) < 0)
             {
                 throw new ArgumentException(String.Format("Output format '{0}' is not valid", ar["-format"]));
             }
@@ -298,6 +315,67 @@ namespace ExcelToTable
             }
 
             sb.Append("\n</table>");
+            return sb.ToString();
+        }
+
+        public static string RowsToJSON_ArrayOfArrays(List<List<string>> rows)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("[\n");
+
+            for (int i = 0; i < rows.Count; i++)
+            {
+                sb.Append("\n\t[");
+
+                for (int n = 0; n < rows[i].Count; n++)
+                {
+                    if(n == rows[i].Count - 1)
+                    {
+                        sb.Append(String.Format("\n\t\t\t\"{0}\"", rows[i][n].Replace("\"", "\\\"")));
+                    }
+                    else
+                    {
+                        sb.Append(String.Format("\n\t\t\t\"{0}\",", rows[i][n].Replace("\"", "\\\"")));
+                    }
+                }
+
+                sb.Append("\n\t]");
+
+                if (i < rows.Count - 1)
+                    sb.Append(",");
+            }
+
+            sb.Append("\n]");
+            return sb.ToString();
+        }
+
+        public static string RowsToJSON_ArrayOfObjects(List<List<string>> rows)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("[\n");
+
+            List<string> keys = new List<string>();
+            for (int n = 0; n < rows[0].Count; n++)
+            {
+                keys.Add(String.Format("{0}", rows[0][n]));
+            }
+
+            for (int i = 1; i < rows.Count; i++)
+            {
+                sb.Append("\n\t{");
+
+                for (int n = 0; n < rows[i].Count; n++)
+                {
+                    sb.Append(String.Format("\n\t\t\"{0}\" : \"{1}\"", keys[n].Replace("\"", string.Empty), rows[i][n].Replace("\"", "\\\"")));
+                }
+
+                sb.Append("\n\t}");
+
+                if (i < rows.Count - 1)
+                    sb.Append(",");
+            }
+
+            sb.Append("\n]");
             return sb.ToString();
         }
 
