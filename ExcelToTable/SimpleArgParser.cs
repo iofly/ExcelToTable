@@ -209,6 +209,15 @@ namespace ExcelToTable
                     }
                 }
             }
+
+            foreach(var arg in Arguments)
+            {
+                if(this._SupportedArgs.Where(a => a.Name == arg.Key).FirstOrDefault()==null)
+                {
+                    throw new ArgumentException(String.Format("Argument not recognised: {0}", arg.Key));
+                }
+            }
+
         }
 
         public void ShowUsage()
