@@ -161,17 +161,6 @@ namespace ExcelToTable
         #endregion
 
         #region Argument stuff
-        public static void ShowUsage()
-        {
-            Console.WriteLine(String.Format("Usage: {0} -filename [excelfilename] -worksheet [1-n] -format [html|wikitable|jsonarrays|jsonsobjects]", System.AppDomain.CurrentDomain.FriendlyName));
-            Console.WriteLine("-filename: The Excel file name, relative or absolute path.");
-            Console.WriteLine("-worksheet is optional. Defaults to 1");
-            Console.WriteLine("-format [optional]. Output file format. Defaults to wikitable");
-            Console.WriteLine("\t\tjsonarrays option outputs each row as an array, making a 2-d array.");
-            Console.WriteLine("\t\tjsonsobjects option outputs an array of objects using the first row as object key names");
-            Console.WriteLine("-range [optional]. Excel worksheet range to export. Defaults to used range");
-            Console.WriteLine(Environment.NewLine);
-        }
 
         /// <summary>
         /// App specific validation of arguments
@@ -180,24 +169,29 @@ namespace ExcelToTable
         /// <returns></returns>
         public static bool ValidateAppArgs(Dictionary<string, dynamic> ar)
         {
-            if (!ar.ContainsKey("-filename"))
-            {
-                throw new ArgumentException("Missing parameter -filename : Must provide input file path");
-            }
-            else if (!System.IO.File.Exists(ar["-filename"]))
+            if (!System.IO.File.Exists(ar["-filename"]))
             {
                 throw new ArgumentException(String.Format("Input file '{0}' does not exist", ar["-filename"]));
             }
-            else if ("html|wikitable|jsonarrays|jsonsobjects".IndexOf(ar["-format"]) < 0)
+            else if(ar.ContainsKey("-format"))
             {
-                throw new ArgumentException(String.Format("Output format '{0}' is not valid", ar["-format"]));
+                if ("html|wikitable|jsonarrays|jsonobjects".IndexOf(ar["-format"]) < 0)
+                {
+                    throw new ArgumentException(String.Format("Output format '{0}' is not valid", ar["-format"]));
+                }
+            }
+            else if (ar.ContainsKey("-range"))
+            {
+                if (ExcelReader.ParseExcelRange(ar["-range"]) == null)
+                {
+                    throw new ArgumentException(String.Format("Range parameter is not valid: '{0}'", ar["-range"]));
+                }
             }
 
             return true;
         }
 
         #endregion
-
     
     }
 
@@ -228,6 +222,7 @@ namespace ExcelToTable
                 _TopLeft = value;
             }
         }
+
         private WorkSheetCoordinate _BottomRight;
         public WorkSheetCoordinate BottomRight
         {

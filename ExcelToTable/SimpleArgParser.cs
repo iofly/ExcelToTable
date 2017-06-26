@@ -210,6 +210,46 @@ namespace ExcelToTable
                 }
             }
         }
+
+        public void ShowUsage()
+        {
+            //_SupportedArgs
+
+            Console.WriteLine(String.Empty);
+            StringBuilder sb = new StringBuilder();
+            sb.Append(String.Format("Usage: {0}", System.AppDomain.CurrentDomain.FriendlyName));
+
+            foreach( var arg in this._SupportedArgs)
+            {
+                if (arg.Required)
+                {
+                    sb.Append(String.Format(" {0} {1}", arg.Name, arg.ExmaplePlaceholder));
+                }
+                else
+                {
+                    sb.Append(String.Format(" {0} [{1}]", arg.Name, arg.ExmaplePlaceholder));
+                }
+            }
+
+            Console.WriteLine(sb.ToString());
+            Console.WriteLine(Environment.NewLine);
+
+            foreach (var arg in this._SupportedArgs)
+            {
+                Console.WriteLine(String.Format("{0}:\t\t{1}", arg.Name, arg.Description));
+            }
+
+                //Console.WriteLine(String.Format("Usage: {0} -filename [excelfilename] -worksheet [1-n] -format [html|wikitable|jsonarrays|jsonobjects]", System.AppDomain.CurrentDomain.FriendlyName));
+
+
+            //    Console.WriteLine("-filename: The Excel file name, relative or absolute path.");
+            //Console.WriteLine("-worksheet is optional. Defaults to 1");
+            //Console.WriteLine("-format [optional]. Output file format. Defaults to wikitable");
+            //Console.WriteLine("\t\tjsonarrays option outputs each row as an array, making a 2-d array.");
+            //Console.WriteLine("\t\tjsonobjects option outputs an array of objects using the first row as object key names");
+            //Console.WriteLine("-range [optional]. Excel worksheet range to export. Defaults to used range");
+            Console.WriteLine(Environment.NewLine);
+        }
     }
 
     public enum SimpleArgType { String = 0 , Integer, Decimal, Date, DateTime, Time, Boolean }
@@ -224,6 +264,10 @@ namespace ExcelToTable
 
         public dynamic DefaultValue { get; set; }
 
+        public string Description { get; set; }
+
+        public string ExmaplePlaceholder { get; set; }
+
         public SimpleArgType ArgType { get; set; }
     }
 
@@ -232,5 +276,14 @@ namespace ExcelToTable
         public string Name { get; }
         public dynamic Value { get; }
     }
+
+
+    
+
+
+
+
+
+
 
 }

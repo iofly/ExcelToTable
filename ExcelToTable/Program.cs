@@ -16,8 +16,8 @@ namespace ExcelToTable
 	{
         static void cMain(string[] args)
         {
-            var r = ExcelReader.ParseExcelRange("AB2:AC3");
-            DateTime dt = new DateTime();
+            //var r = ExcelReader.ParseExcelRange("AB2:AC3");
+            //DateTime dt = new DateTime();
         }
 
         static void Main(string[] args)
@@ -30,10 +30,10 @@ namespace ExcelToTable
 
             #region Define supported arguments
             List<SimpleArg> supportedArgs = new List<SimpleArg>();
-            supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.String });
-            supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = true, DefaultValue = "html", ArgType = SimpleArgType.String });
-            supportedArgs.Add(new SimpleArg { Name = "-worksheet", IsSwitch = false, Required = false, DefaultValue = 1, ArgType = SimpleArgType.Integer });
-            supportedArgs.Add(new SimpleArg { Name = "-range", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String });
+            supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder="excelfilename", Description="Required. The Microsoft Excel file name" });
+            supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = false, DefaultValue = "html", ArgType = SimpleArgType.String, ExmaplePlaceholder = "html|wikitable|jsonsobjects|jsonarrays", Description = "Optional. Output file format [html|wikitable|jsonsobjects|jsonarrays]. Defaults to html." });
+            supportedArgs.Add(new SimpleArg { Name = "-worksheet", IsSwitch = false, Required = false, DefaultValue = 1, ArgType = SimpleArgType.Integer, ExmaplePlaceholder = "1-n", Description = "Optional. A one-based index of the worksheet to export data from. Defaults to 1." });
+            supportedArgs.Add(new SimpleArg { Name = "-range", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder = "excelrange", Description = "Optional. Excel cell range to export. e.g. A12:C23. Defaults to the worksheet's used extents." });
             #endregion
 
             #region Parse and validate arguments
@@ -50,7 +50,7 @@ namespace ExcelToTable
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                Utils.ShowUsage();
+                parser.ShowUsage();
                 return;
             }
 
@@ -75,7 +75,7 @@ namespace ExcelToTable
             catch(ArgumentException ex)
             {
                 Console.WriteLine(ex.Message);
-                Utils.ShowUsage();
+                parser.ShowUsage();
                 return;
             }
             #endregion
@@ -102,7 +102,7 @@ namespace ExcelToTable
                 text = Utils.RowsToWikiTable(rows);
                 fileext = ".txt";
             }
-            else if (ar["-format"] == "jsonsobjects")
+            else if (ar["-format"] == "jsonobjects")
             {
                 text = Utils.RowsToJSON_ArrayOfObjects(rows);
                 fileext = ".objects.json";

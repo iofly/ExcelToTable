@@ -42,6 +42,7 @@ namespace ExcelToTable
                 }
                 else
                 {
+                    //Cell index is [Y,X]! wtf
                     Range c1 = xlWorkSheet.Cells[wsrc.TopLeft.Y, wsrc.TopLeft.X];
                     Range c2 = xlWorkSheet.Cells[wsrc.BottomRight.Y, wsrc.BottomRight.X];
                     //oRange = (Excel.Range)oSheet.get_Range(c1, c2);
@@ -119,7 +120,6 @@ namespace ExcelToTable
             }
         }
 
-
         public static WorkSheetRangeCoordinates ParseExcelRange(string Range)
         {
             //BMZ4:BNC14
@@ -156,6 +156,13 @@ namespace ExcelToTable
                 }
                 rangeCoords.BottomRight.X = colIndex;
                 rangeCoords.BottomRight.Y = int.Parse(matches[0].Groups[4].Value);
+
+                if(!RangeIsValid(rangeCoords))
+                {
+                    return null;
+                }
+
+
                 return rangeCoords;
             }
             else
@@ -164,5 +171,17 @@ namespace ExcelToTable
             }
         }
 
+        public static bool RangeIsValid(WorkSheetRangeCoordinates wsrc)
+        {
+            //Excel limits = 1,048,576 rows by 16,384 columns
+            if(wsrc == null)
+            {
+                return false;
+            }
+
+            return (wsrc.TopLeft.X <= 16384) && (wsrc.BottomRight.X <= 16384) && (wsrc.TopLeft.Y <= 1048576) && (wsrc.BottomRight.Y <= 1048576);
+
+            //long l = Math.Abs(Convert.ToInt64(wsrc.TopLeft.X - wsrc.BottomRight.X)) * Math.Abs(Convert.ToInt64(wsrc.TopLeft.Y - wsrc.BottomRight.Y));
+        }
     }
 }
