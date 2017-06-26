@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Globalization;
 
 namespace ExcelToTable
@@ -285,14 +283,4 @@ namespace ExcelToTable
         public string Name { get; }
         public dynamic Value { get; }
     }
-
-
-    
-
-
-
-
-
-
-
 }

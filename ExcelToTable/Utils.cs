@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-
-using System.Threading.Tasks;
 
 namespace ExcelToTable
 {
     public class Utils
     {
-        
         #region Output calls
         public static string RowsToWikiTable(List<List<string>> rows)
         {
@@ -192,7 +188,5 @@ namespace ExcelToTable
         }
 
         #endregion
-    
     }
-
 }

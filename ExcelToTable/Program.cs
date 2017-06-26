@@ -1,12 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Office.Interop;
-using Microsoft.Office.Interop.Excel;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 
 namespace ExcelToTable
 {
@@ -14,12 +7,6 @@ namespace ExcelToTable
 
     class Program
 	{
-        static void cMain(string[] args)
-        {
-            //var r = ExcelReader.ParseExcelRange("AB2:AC3");
-            //DateTime dt = new DateTime();
-        }
-
         static void Main(string[] args)
         {
             ResultCode rc;
