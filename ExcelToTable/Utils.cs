@@ -195,45 +195,4 @@ namespace ExcelToTable
     
     }
 
-    public class WorkSheetCoordinate
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-    }
-
-    public class WorkSheetRangeCoordinates
-    {
-        public WorkSheetRangeCoordinates()
-        {
-            _TopLeft = new WorkSheetCoordinate();
-            _BottomRight = new WorkSheetCoordinate();
-
-        }
-
-        private WorkSheetCoordinate _TopLeft;
-        public WorkSheetCoordinate TopLeft
-        {
-            get
-            {
-                return _TopLeft;
-            }
-            set
-            {
-                _TopLeft = value;
-            }
-        }
-
-        private WorkSheetCoordinate _BottomRight;
-        public WorkSheetCoordinate BottomRight
-        {
-            get
-            {
-                return _BottomRight;
-            }
-            set
-            {
-                _BottomRight = value;
-            }
-        }
-    }
 }
