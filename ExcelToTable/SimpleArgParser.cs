@@ -36,6 +36,7 @@ namespace ExcelToTable
                 }
             }
 
+            //Validate argument formats
             Dictionary<string, dynamic> parsedArgs = new Dictionary<string, dynamic>();
             for (int i = 0; i < argsList.Count; i+=2)
             {
@@ -58,6 +59,21 @@ namespace ExcelToTable
                     {
                         case SimpleArgType.String:
                             {
+                                parsedArgs.Add(argsList[i], argsList[i + 1]);
+                                break;
+                            }
+                        case SimpleArgType.Filename:
+                            {
+                                if(!System.IO.Path.IsPathRooted(argsList[i + 1]))
+                                {
+                                    argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
+                                }
+                               
+                                if(!System.IO.File.Exists(argsList[i + 1]))
+                                {
+                                    throw new ArgumentException(String.Format("File not found: {0}", argsList[i + 1]));
+                                }
+
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
                                 break;
                             }
@@ -98,7 +114,7 @@ namespace ExcelToTable
                                     
                                 if(!success)
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected DateTime: {0} in supported format ", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
+                                    throw new ArgumentException(String.Format("Argument malformed. Expected DateTime: {0} in supported format. Supported formats {1}", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
                                 }
                       
                                 parsedArgs.Add(argsList[i], dt);
@@ -120,7 +136,7 @@ namespace ExcelToTable
 
                                 if (!success)
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected Date: {0} in supported format ", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
+                                    throw new ArgumentException(String.Format("Argument malformed. Expected Date: {0} in supported format. Supported formats {1}", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
                                 }
 
                                 parsedArgs.Add(argsList[i], dt);
@@ -142,7 +158,7 @@ namespace ExcelToTable
 
                                 if (!success)
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected Time: {0} in supported format ", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
+                                    throw new ArgumentException(String.Format("Argument malformed. Expected Time: {0} in supported format. Supported formats {1}", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
                                 }
 
                                 parsedArgs.Add(argsList[i], dt);
@@ -192,30 +208,30 @@ namespace ExcelToTable
                 }
             }
 
-            return parsedArgs;
-        }
 
-        public void ValidateArgs(Dictionary<string, dynamic> Arguments)
-        {
-            if(_RequiredArgs != null)
+            //Check that required arguments were passed
+            if (_RequiredArgs != null)
             {
-                foreach(var pa in _RequiredArgs)
+                foreach (var pa in _RequiredArgs)
                 {
-                    if(!Arguments.ContainsKey(pa.Name))
+                    if (!parsedArgs.ContainsKey(pa.Name))
                     {
                         throw new ArgumentException(String.Format("Required argument {0} not provided", pa.Name));
                     }
                 }
             }
 
-            foreach(var arg in Arguments)
+            //Check that no unsupported arguments passed
+            foreach (var arg in parsedArgs)
             {
-                if(this._SupportedArgs.Where(a => a.Name == arg.Key).FirstOrDefault()==null)
+                var sa = this._SupportedArgs.Where(a => a.Name == arg.Key).FirstOrDefault();
+                if (sa == null)
                 {
                     throw new ArgumentException(String.Format("Argument not recognised: {0}", arg.Key));
                 }
             }
 
+            return parsedArgs;
         }
 
         public void ShowUsage()
@@ -259,7 +275,7 @@ namespace ExcelToTable
         }
     }
 
-    public enum SimpleArgType { String = 0 , Integer, Decimal, Date, DateTime, Time, Boolean }
+    public enum SimpleArgType { String = 0 , Filename, Integer, Decimal, Date, DateTime, Time, Boolean }
 
     public class SimpleArg
     {

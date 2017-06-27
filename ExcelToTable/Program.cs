@@ -17,7 +17,7 @@ namespace ExcelToTable
 
             #region Define supported arguments
             List<SimpleArg> supportedArgs = new List<SimpleArg>();
-            supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder="excelfilename", Description="Required. The Microsoft Excel file name" });
+            supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.Filename, ExmaplePlaceholder="excelfilename", Description="Required. The Microsoft Excel file name" });
             supportedArgs.Add(new SimpleArg { Name = "-outfile", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder = "outputfilename", Description = "Optional. Output file. Defaults to [excelfilename] with format specific extension appended." });
             supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = false, DefaultValue = "html", ArgType = SimpleArgType.String, ExmaplePlaceholder = "html|wikitable|jsonsobjects|jsonarrays", Description = "Optional. Output file format [html|wikitable|jsonsobjects|jsonarrays]. Defaults to html." });
             supportedArgs.Add(new SimpleArg { Name = "-worksheet", IsSwitch = false, Required = false, DefaultValue = 1, ArgType = SimpleArgType.Integer, ExmaplePlaceholder = "1-n", Description = "Optional. A one-based index of the worksheet to export data from. Defaults to 1." });
@@ -33,9 +33,8 @@ namespace ExcelToTable
             try
             {
                 ar = parser.ParseArgs(args);
-                parser.ValidateArgs(ar);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Console.WriteLine(ex.Message);
                 parser.ShowUsage();
@@ -55,8 +54,6 @@ namespace ExcelToTable
                 outfile = System.IO.Path.GetFullPath(ar["-outfile"]);
             }
 
-
-
             WorkSheetRangeCoordinates wsrc = null;
             if (ar.ContainsKey("-range"))
             {
@@ -75,13 +72,6 @@ namespace ExcelToTable
                 return;
             }
             #endregion
-
-
-
-            
-
-
-
 
             #region Read excel file
             rows = ExcelReader.ReadExcelRows(ar["-filename"], out rc, out ResultDesc, ar["-worksheet"], wsrc);
