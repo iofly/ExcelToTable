@@ -17,7 +17,7 @@ namespace ExcelToTable
 
             #region Define supported arguments
             List<SimpleArg> supportedArgs = new List<SimpleArg>();
-            supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.Filename, ExmaplePlaceholder="excelfilename", Description="Required. The Microsoft Excel file name" });
+            supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.ExistingFilename, ExmaplePlaceholder="excelfilename", Description="Required. The Microsoft Excel file name" });
             supportedArgs.Add(new SimpleArg { Name = "-outfile", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder = "outputfilename", Description = "Optional. Output file. Defaults to [excelfilename] with format specific extension appended." });
             supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = false, DefaultValue = "html", ArgType = SimpleArgType.String, ExmaplePlaceholder = "html|wikitable|jsonsobjects|jsonarrays", Description = "Optional. Output file format [html|wikitable|jsonsobjects|jsonarrays]. Defaults to html." });
             supportedArgs.Add(new SimpleArg { Name = "-worksheet", IsSwitch = false, Required = false, DefaultValue = 1, ArgType = SimpleArgType.Integer, ExmaplePlaceholder = "1-n", Description = "Optional. A one-based index of the worksheet to export data from. Defaults to 1." });

@@ -62,14 +62,56 @@ namespace ExcelToTable
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
                                 break;
                             }
-                        case SimpleArgType.Filename:
+                        case SimpleArgType.FileName:
+                            {
+                                if (!System.IO.Path.IsPathRooted(argsList[i + 1]))
+                                {
+                                    argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
+                                }
+
+                                if (!IsValidFilename(argsList[i + 1]))
+                                {
+                                    throw new ArgumentException(String.Format("Invalid filename for argument {0}: {1}", argsList[i], argsList[i + 1]));
+                                }
+
+                                break;
+                            }
+                        case SimpleArgType.NewFilename:
                             {
                                 if(!System.IO.Path.IsPathRooted(argsList[i + 1]))
                                 {
                                     argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
                                 }
-                               
-                                if(!System.IO.File.Exists(argsList[i + 1]))
+
+                                if(!IsValidFilename(argsList[i + 1]))
+                                {
+                                    throw new ArgumentException(String.Format("Invalid filename for argument {0}: {1}", argsList[i], argsList[i + 1]));
+                                }
+
+                                if (System.IO.File.Exists(argsList[i + 1]))
+                                {
+                                    throw new ArgumentException(String.Format("File already exists: {0}", argsList[i + 1]));
+                                }
+
+
+                                //let app create the dirs
+                                //string AbsDir = string.Empty;
+                                //if (!DirPartExists(argsList[i + 1], out AbsDir))
+                                //{
+                                //    throw new ArgumentException(String.Format("Directory {0} does not exist. Cannot create output file.", AbsDir));
+                                //}
+
+                                parsedArgs.Add(argsList[i], argsList[i + 1]);
+                                break;
+                            }
+                        case SimpleArgType.ExistingFilename:
+                            {
+                                if (!System.IO.Path.IsPathRooted(argsList[i + 1]))
+                                {
+                                    argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
+                                }
+
+                                if (!System.IO.File.Exists(argsList[i + 1]))
                                 {
                                     throw new ArgumentException(String.Format("File not found: {0}", argsList[i + 1]));
                                 }
@@ -273,9 +315,54 @@ namespace ExcelToTable
             //Console.WriteLine("-range [optional]. Excel worksheet range to export. Defaults to used range");
             Console.WriteLine(Environment.NewLine);
         }
+
+        private bool IsValidFilename(string Filename)
+        {
+            if (((!string.IsNullOrEmpty(Filename)) && (Filename.IndexOfAny(System.IO.Path.GetInvalidPathChars()) >= 0)) == false)
+            {
+                return false;
+            }
+
+            //check for 2 seperators in a row in filename, except the start
+            string sep2 = String.Format("{0}{0}", System.IO.Path.DirectorySeparatorChar);
+            if (Filename.IndexOf(sep2)>=1) //check fron 2nd char on, don't disallow \\ at start of filename, its a valid UNC path root
+            {
+                return false;
+            }
+
+            //Check for trailing spaces in dir path elements
+            char[] sep = { System.IO.Path.DirectorySeparatorChar };
+            string[] parts = Filename.Split(sep);
+
+            foreach(string s in parts)
+            {
+                if(s.Trim()!=s)
+                {
+                    return false;
+                }
+                if(String.IsNullOrWhiteSpace(s))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool DirPartExists(string Filename, out string AbsDirName)
+        {
+            if(System.IO.Path.IsPathRooted(Filename))
+            {
+                Filename = System.IO.Path.GetFullPath(Filename);
+            }
+
+            AbsDirName = System.IO.Path.GetDirectoryName(Filename);
+
+            return System.IO.Directory.Exists(AbsDirName);
+        }
     }
 
-    public enum SimpleArgType { String = 0 , Filename, Integer, Decimal, Date, DateTime, Time, Boolean }
+    public enum SimpleArgType { String = 0 , FileName, NewFilename, ExistingFilename, Integer, Decimal, Date, DateTime, Time, Boolean }
 
     public class SimpleArg
     {
@@ -294,9 +381,4 @@ namespace ExcelToTable
         public SimpleArgType ArgType { get; set; }
     }
 
-    public class PassedArg
-    {
-        public string Name { get; }
-        public dynamic Value { get; }
-    }
 }
