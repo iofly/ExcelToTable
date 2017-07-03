@@ -229,6 +229,45 @@ namespace ExcelToTable
                                 parsedArgs.Add(argsList[i], testB);
                                 break;
                             }
+                        case SimpleArgType.URI:
+                            {
+                                Uri uri = null; 
+                                if(Uri.TryCreate(argsList[i + 1], UriKind.Absolute, out uri))
+                                {
+                                    parsedArgs.Add(argsList[i], uri);
+                                }
+                                else
+                                {
+                                    throw new ArgumentException(String.Format("URI argument malformed. Argument {0} => '{1}' is not in a supported URI format.", argsList[i], argsList[i + 1]));
+                                }
+                                break;
+                            }
+                        case SimpleArgType.EmailAddress:
+                            {
+                                if (System.Text.RegularExpressions.Regex.IsMatch(argsList[i + 1], @"^([\w\.\-]+)@([\w\-]+)((\.(\w){ 2,3})+)$"))
+                                {
+                                    parsedArgs.Add(argsList[i], argsList[i + 1]);
+                                }
+                                else
+                                {
+                                    throw new ArgumentException(String.Format("Email argument malformed. Argument {0} => '{1}' is not a valid email address.", argsList[i], argsList[i + 1]));
+                                }
+                                break;
+                            }
+                        case SimpleArgType.Guid:
+                            {
+                                Guid g;
+                                if(Guid.TryParse(argsList[i + 1], out g))
+                                {
+                                    parsedArgs.Add(argsList[i], argsList[i + 1]);
+                                }
+                                else
+                                {
+                                    throw new ArgumentException(String.Format("GUID argument malformed. Argument {0} => '{1}' is not a valid GUID.", argsList[i], argsList[i + 1]));
+                                }
+                                break;
+                            }
+
                     }
                 }
                 else
@@ -242,10 +281,6 @@ namespace ExcelToTable
             {
                 parsedArgs.Add(s, null);
             }
-
-
-
-
 
 
             //Check the inc/exc list:
@@ -403,7 +438,7 @@ namespace ExcelToTable
         }
     }
 
-    public enum SimpleArgType { String = 0 , FileName, NewFilename, ExistingFilename, Integer, Decimal, Date, DateTime, Time, Boolean }
+    public enum SimpleArgType { String = 0 , FileName, NewFilename, ExistingFilename, Integer, Decimal, Date, DateTime, Time, Boolean, URI, EmailAddress, Guid }
 
     public class SimpleArg
     {
