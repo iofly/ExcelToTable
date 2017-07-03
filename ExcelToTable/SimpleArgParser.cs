@@ -12,6 +12,7 @@ namespace ExcelToTable
         private List<SimpleArg> _RequiredArgs;
         private List<SimpleArg> _SupportedSwitches;
         private List<SimpleArg> _OptionalArgsWithDefaultValue;
+
         public SimpleArgParser(List<SimpleArg> SupportedArgs)
         {
             _SupportedArgs = SupportedArgs;
@@ -42,7 +43,7 @@ namespace ExcelToTable
             {
                 if (parsedArgs.ContainsKey(argsList[i]))
                 {
-                    continue;
+                    throw new ArgumentException(String.Format("Ducplicate argument {0}", argsList[i]));
                 }
 
                 if(i<argsList.Count-1)
@@ -71,9 +72,10 @@ namespace ExcelToTable
 
                                 if (!IsValidFilename(argsList[i + 1]))
                                 {
-                                    throw new ArgumentException(String.Format("Invalid filename for argument {0}: {1}", argsList[i], argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("Invalid filename for argument: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
 
+                                parsedArgs.Add(argsList[i], argsList[i + 1]);
                                 break;
                             }
                         case SimpleArgType.NewFilename:
@@ -85,14 +87,13 @@ namespace ExcelToTable
 
                                 if(!IsValidFilename(argsList[i + 1]))
                                 {
-                                    throw new ArgumentException(String.Format("Invalid filename for argument {0}: {1}", argsList[i], argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("Invalid filename for argument: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
 
                                 if (System.IO.File.Exists(argsList[i + 1]))
                                 {
-                                    throw new ArgumentException(String.Format("File already exists: {0}", argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("File already exists: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
-
 
                                 //let app create the dirs
                                 //string AbsDir = string.Empty;
@@ -113,7 +114,7 @@ namespace ExcelToTable
 
                                 if (!System.IO.File.Exists(argsList[i + 1]))
                                 {
-                                    throw new ArgumentException(String.Format("File not found: {0}", argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("File not found: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
 
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
@@ -124,7 +125,7 @@ namespace ExcelToTable
                                 int testI = 0;
                                 if(!int.TryParse(argsList[i + 1], out testI))
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected integer: {0} -> {1}", argsList[i], argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("Argument malformed. Expected integer: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
                                 parsedArgs.Add(argsList[i], testI);
                                 break;
@@ -134,7 +135,7 @@ namespace ExcelToTable
                                 double testD = 0.0;
                                 if (!double.TryParse(argsList[i + 1], NumberStyles.Float, provider, out testD))
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected decimal number: {0} -> {1}", argsList[i], argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("Argument malformed. Expected decimal number: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
                                 parsedArgs.Add(argsList[i], testD);
                                 break;
@@ -143,7 +144,7 @@ namespace ExcelToTable
                             {
                                 
                                 DateTime dt = DateTime.MinValue;
-                                string[] supportedDateTimeFormats = { "yyyy-MM-dd hh:mm:ss" };
+                                string[] supportedDateTimeFormats = { "yyyy-MM-dd hh:mm:ss", "yyyy/MM/dd hh:mm:ss" };
                                 bool success = false;
                                 foreach (string s in supportedDateTimeFormats)
                                 {
@@ -156,7 +157,7 @@ namespace ExcelToTable
                                     
                                 if(!success)
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected DateTime: {0} in supported format. Supported formats {1}", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
+                                    throw new ArgumentException(String.Format("DateTime argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
                                 }
                       
                                 parsedArgs.Add(argsList[i], dt);
@@ -165,7 +166,7 @@ namespace ExcelToTable
                         case SimpleArgType.Date:
                             {
                                 DateTime dt = DateTime.MinValue;
-                                string[] supportedDateTimeFormats = { "yyyy-MM-dd" };
+                                string[] supportedDateTimeFormats = { "yyyy-MM-dd", "yyyy/MM/dd" };
                                 bool success = false;
                                 foreach (string s in supportedDateTimeFormats)
                                 {
@@ -178,7 +179,7 @@ namespace ExcelToTable
 
                                 if (!success)
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected Date: {0} in supported format. Supported formats {1}", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
+                                    throw new ArgumentException(String.Format("Date argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
                                 }
 
                                 parsedArgs.Add(argsList[i], dt);
@@ -187,7 +188,7 @@ namespace ExcelToTable
                         case SimpleArgType.Time:
                             {
                                 DateTime dt = DateTime.MinValue;
-                                string[] supportedDateTimeFormats = { "HH:mm:ss" };
+                                string[] supportedDateTimeFormats = { "HH:mm:ss", "HH:mm" };
                                 bool success = false;
                                 foreach (string s in supportedDateTimeFormats)
                                 {
@@ -200,7 +201,7 @@ namespace ExcelToTable
 
                                 if (!success)
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected Time: {0} in supported format. Supported formats {1}", argsList[i], String.Join(" / ", supportedDateTimeFormats)));
+                                    throw new ArgumentException(String.Format("Time argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
                                 }
 
                                 parsedArgs.Add(argsList[i], dt);
@@ -208,20 +209,21 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.Boolean:
                             {
-                                string[] trues = { "true", "1" };
-                                string[] falses = { "false", "0" };
+                                string[] trues = { "true", "1", "yes", "y" };
+                                string[] falses = { "false", "0", "no", "n" };
                                 bool testB = false;
-                                if(Array.IndexOf<string>(trues, argsList[i])>=0)
+
+                                if (trues.Contains(argsList[i + 1]))
                                 {
                                     testB = true;
                                 }
-                                else if (Array.IndexOf<string>(falses, argsList[i]) >= 0)
+                                else if (falses.Contains(argsList[i + 1]))
                                 {
                                     testB = false;
                                 }
                                 else
                                 {
-                                    throw new ArgumentException(String.Format("Argument malformed. Expected boolean in supported format: {0} -> true/1/false/0", argsList[i], argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("Boolean argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}, {3}]", argsList[i], argsList[i + 1], String.Join(", ", trues), String.Join(", ", falses)));
                                 }
 
                                 parsedArgs.Add(argsList[i], testB);
@@ -241,14 +243,48 @@ namespace ExcelToTable
                 parsedArgs.Add(s, null);
             }
 
-            //Add defaults for optional args not passed
-            foreach(var optionalArg in _OptionalArgsWithDefaultValue)
+
+
+
+
+
+            //Check the inc/exc list:
+            //If an arg is optional, its exclusion/inclusion list is ignored
+            //If an arg is required it will have no effect if included in an exclusion or inclusion list
+            var argumentsWithExclusionList = this._RequiredArgs.Where(a => (a.ExcludeArgs != null) && (a.Required == true)).ToList();
+            var argumentsWithInclusionList = this._RequiredArgs.Where(a => (a.IncludeArgs != null) && (a.Required == true)).ToList();
+
+           
+            //Check exclusion
+            foreach (var arg in parsedArgs)
             {
-                if(!parsedArgs.ContainsKey(optionalArg.Name))
+                var argExcludeCheck = argumentsWithExclusionList.Where(fa => fa.ExcludeArgs.Contains(arg.Key)).FirstOrDefault();
+                if(argExcludeCheck!=null)
                 {
-                    parsedArgs.Add(optionalArg.Name, optionalArg.DefaultValue);
+                    throw new ArgumentException(String.Format("Argument '{0}' cannot be passed if argument '{1}' has been passed.", arg.Key, argExcludeCheck.Name));
                 }
             }
+
+           
+            //Check Inclusion
+            foreach (var argI in argumentsWithInclusionList)
+            {
+                if(!parsedArgs.ContainsKey(argI.Name))
+                {
+                    continue;
+                }
+
+                //was every arg in argI.IncludeArgs privided?
+                foreach(string s in argI.IncludeArgs)
+                {
+                    if (!parsedArgs.ContainsKey(s))
+                    {
+                        throw new ArgumentException(String.Format("Argument '{0}' must be passed if argument '{1}' has been passed.", s, argI.Name));
+                    }
+                }
+            }
+
+
 
 
             //Check that required arguments were passed
@@ -272,6 +308,20 @@ namespace ExcelToTable
                     throw new ArgumentException(String.Format("Argument not recognised: {0}", arg.Key));
                 }
             }
+
+            //Add defaults for optional args not passed
+            foreach (var optionalArg in _OptionalArgsWithDefaultValue)
+            {
+                if(!parsedArgs.ContainsKey(optionalArg.Name))
+                {
+                    parsedArgs.Add(optionalArg.Name, optionalArg.DefaultValue);
+                }
+            }
+
+
+            
+
+            
 
             return parsedArgs;
         }
@@ -304,15 +354,6 @@ namespace ExcelToTable
                 Console.WriteLine(String.Format("{0}:\t\t{1}", arg.Name, arg.Description));
             }
 
-                //Console.WriteLine(String.Format("Usage: {0} -filename [excelfilename] -worksheet [1-n] -format [html|wikitable|jsonarrays|jsonobjects]", System.AppDomain.CurrentDomain.FriendlyName));
-
-
-            //    Console.WriteLine("-filename: The Excel file name, relative or absolute path.");
-            //Console.WriteLine("-worksheet is optional. Defaults to 1");
-            //Console.WriteLine("-format [optional]. Output file format. Defaults to wikitable");
-            //Console.WriteLine("\t\tjsonarrays option outputs each row as an array, making a 2-d array.");
-            //Console.WriteLine("\t\tjsonobjects option outputs an array of objects using the first row as object key names");
-            //Console.WriteLine("-range [optional]. Excel worksheet range to export. Defaults to used range");
             Console.WriteLine(Environment.NewLine);
         }
 
@@ -366,6 +407,11 @@ namespace ExcelToTable
 
     public class SimpleArg
     {
+        public SimpleArg()
+        {
+            _ExcludeArgs = new List<string>();
+            _IncludeArgs = new List<string>();
+        }
         public bool IsSwitch { get; set; }
 
         public string Name { get; set; }
@@ -379,6 +425,41 @@ namespace ExcelToTable
         public string ExmaplePlaceholder { get; set; }
 
         public SimpleArgType ArgType { get; set; }
+
+
+
+        private List<string> _ExcludeArgs;
+        /// <summary>
+        /// List of argument names that MUST NOT be passed if this argument is passed.
+        /// </summary>
+        public List<string> ExcludeArgs
+        {
+            get
+            {
+                return _ExcludeArgs;
+            }
+            set
+            {
+                _ExcludeArgs = value;
+            }
+        }
+
+        private List<string> _IncludeArgs;
+        /// <summary>
+        /// List of argument names that MUST be passed if this argument is passed.
+        /// </summary>
+        public List<string> IncludeArgs
+        {
+            get
+            {
+                return _IncludeArgs;
+            }
+            set
+            {
+                _IncludeArgs = value;
+            }
+        }
     }
+
 
 }
