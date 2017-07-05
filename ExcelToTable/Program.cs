@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using SimpleArgs;
 
 namespace ExcelToTable
 {
@@ -16,56 +17,54 @@ namespace ExcelToTable
             string text = string.Empty;
 
             #region Define supported arguments
-            List<SimpleArg> supportedArgs = new List<SimpleArg>();
+            var supportedArgs = new List<SimpleArg>();
             supportedArgs.Add(new SimpleArg { Name = "-filename", IsSwitch = false, Required = true, DefaultValue = null, ArgType = SimpleArgType.ExistingFilename, ExmaplePlaceholder="excelfilename", Description="Required. The Microsoft Excel file name" });
             supportedArgs.Add(new SimpleArg { Name = "-outfile", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder = "outputfilename", Description = "Optional. Output file. Defaults to [excelfilename] with format specific extension appended."});
             supportedArgs.Add(new SimpleArg { Name = "-format", IsSwitch = false, Required = false, DefaultValue = "html", ArgType = SimpleArgType.String, ExmaplePlaceholder = "html|wikitable|jsonsobjects|jsonarrays", Description = "Optional. Output file format [html|wikitable|jsonsobjects|jsonarrays]. Defaults to html." });
             supportedArgs.Add(new SimpleArg { Name = "-worksheet", IsSwitch = false, Required = false, DefaultValue = 1, ArgType = SimpleArgType.Integer, ExmaplePlaceholder = "1-n", Description = "Optional. A one-based index of the worksheet to export data from. Defaults to 1." });
             supportedArgs.Add(new SimpleArg { Name = "-range", IsSwitch = false, Required = false, DefaultValue = null, ArgType = SimpleArgType.String, ExmaplePlaceholder = "excelrange", Description = "Optional. Excel cell range to export. e.g. A12:C23. Defaults to the worksheet's used extents." });
-
             #endregion
 
             #region Parse and validate arguments
 
-            SimpleArgParser parser = new SimpleArgParser(supportedArgs);
-            Dictionary<string, dynamic> ar = new Dictionary<string, dynamic>();
-
+            SimpleArgParser parser = null;
+            
             //Validate against general rules as specified above.
             try
             {
-                ar = parser.ParseArgs(args);
+                parser = new SimpleArgParser(supportedArgs, args);
             }
             catch (ArgumentException ex)
             {
                 Console.WriteLine(String.Empty);
                 Console.WriteLine(String.Format("Error: {0}", ex.Message));
-                parser.ShowUsage();
+                SimpleArgParser.ShowUsage(supportedArgs);
                 return;
             }
 
             //Fix for filename ->abs filename - for case where app is called via batch file
-            if (!System.IO.Path.IsPathRooted(ar["-filename"]))
+            if (!System.IO.Path.IsPathRooted(parser.ParsedArguments["-filename"]))
             {
-                ar["-filename"] = System.IO.Path.GetFullPath(ar["-filename"]);
+                parser.ParsedArguments["-filename"] = System.IO.Path.GetFullPath(parser.ParsedArguments["-filename"]);
             }
 
 
             string outfile = string.Empty;
-            if(ar.ContainsKey("-outfile"))
+            if(parser.ParsedArguments.ContainsKey("-outfile"))
             {
-                outfile = System.IO.Path.GetFullPath(ar["-outfile"]);
+                outfile = System.IO.Path.GetFullPath(parser.ParsedArguments["-outfile"]);
             }
 
             WorkSheetRangeCoordinates wsrc = null;
-            if (ar.ContainsKey("-range"))
+            if (parser.ParsedArguments.ContainsKey("-range"))
             {
-                wsrc = ExcelReader.ParseExcelRange(ar["-range"]);
+                wsrc = ExcelReader.ParseExcelRange(parser.ParsedArguments["-range"]);
             }
 
             //App specific validation of args
             try
             {
-                Utils.ValidateAppArgs(ar);
+                Utils.ValidateAppArgs(parser.ParsedArguments);
             }
             catch(ArgumentException ex)
             {
@@ -76,7 +75,7 @@ namespace ExcelToTable
             #endregion
 
             #region Read excel file
-            rows = ExcelReader.ReadExcelRows(ar["-filename"], out rc, out ResultDesc, ar["-worksheet"], wsrc);
+            rows = ExcelReader.ReadExcelRows(parser.ParsedArguments["-filename"], out rc, out ResultDesc, parser.ParsedArguments["-worksheet"], wsrc);
             if (rc == ResultCode.ErrorOpeningFile)
             {
                 Console.WriteLine(String.Format("ErrorOpeningFile: {0}", ResultDesc));
@@ -85,17 +84,17 @@ namespace ExcelToTable
             #endregion
 
             #region Output result
-            if (ar["-format"] == "wikitable")
+            if (parser.ParsedArguments["-format"] == "wikitable")
             {
                 text = Utils.RowsToWikiTable(rows);
                 fileext = ".txt";
             }
-            else if (ar["-format"] == "jsonobjects")
+            else if (parser.ParsedArguments["-format"] == "jsonobjects")
             {
                 text = Utils.RowsToJSON_ArrayOfObjects(rows);
                 fileext = ".objects.json";
             }
-            else if (ar["-format"] == "jsonarrays")
+            else if (parser.ParsedArguments["-format"] == "jsonarrays")
             {
                 text = Utils.RowsToJSON_ArrayOfArrays(rows);
                 fileext = ".arrays.json";
@@ -113,7 +112,7 @@ namespace ExcelToTable
             }
             else
             {
-                System.IO.File.WriteAllText(System.IO.Path.GetFileName(ar["-filename"]) + fileext, text);
+                System.IO.File.WriteAllText(System.IO.Path.GetFileName(parser.ParsedArguments["-filename"]) + fileext, text);
             }
             #endregion
         }

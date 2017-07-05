@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Globalization;
 
-namespace ExcelToTable
+namespace SimpleArgs
 {
     public class SimpleArgParser
     {
@@ -12,16 +12,30 @@ namespace ExcelToTable
         private List<SimpleArg> _RequiredArgs;
         private List<SimpleArg> _SupportedSwitches;
         private List<SimpleArg> _OptionalArgsWithDefaultValue;
+        private Dictionary<string, dynamic> _ParsedArguments;
 
-        public SimpleArgParser(List<SimpleArg> SupportedArgs)
+        public Dictionary<string, dynamic> ParsedArguments
+        {
+            get
+            {
+                return _ParsedArguments;
+            }
+            set
+            {
+                _ParsedArguments = value;
+            }
+        }
+
+        public SimpleArgParser(List<SimpleArg> SupportedArgs, string[] args)
         {
             _SupportedArgs = SupportedArgs;
             _RequiredArgs = _SupportedArgs.Where(sa => sa.Required == true).ToList();
             _OptionalArgsWithDefaultValue = _SupportedArgs.Where(sa => (sa.Required == false) && (sa.DefaultValue!=null)).ToList();
             _SupportedSwitches = _SupportedArgs.Where(sa => sa.IsSwitch == true).ToList();
+            _ParsedArguments = this.ParseArgs(args);
         }
 
-        public Dictionary<string, dynamic> ParseArgs(string[] Args)
+        private Dictionary<string, dynamic> ParseArgs(string[] Args)
         {
             List<string> SuppliedSwitches = new List<string>();
             List<string> argsList = Args.ToList<string>();
@@ -43,7 +57,7 @@ namespace ExcelToTable
             {
                 if (parsedArgs.ContainsKey(argsList[i]))
                 {
-                    throw new ArgumentException(String.Format("Ducplicate argument {0}", argsList[i]));
+                    throw new ArgumentException(String.Format("Duplicate argument {0}", argsList[i]));
                 }
 
                 if(i<argsList.Count-1)
@@ -122,8 +136,7 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.Integer:
                             {
-                                int testI = 0;
-                                if(!int.TryParse(argsList[i + 1], out testI))
+                                if(!int.TryParse(argsList[i + 1], out var testI))
                                 {
                                     throw new ArgumentException(String.Format("Argument malformed. Expected integer: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
@@ -132,8 +145,7 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.Decimal:
                             {
-                                double testD = 0.0;
-                                if (!double.TryParse(argsList[i + 1], NumberStyles.Float, provider, out testD))
+                                if (!double.TryParse(argsList[i + 1], NumberStyles.Float, provider, out var testD))
                                 {
                                     throw new ArgumentException(String.Format("Argument malformed. Expected decimal number: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
@@ -231,8 +243,7 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.URI:
                             {
-                                Uri uri = null; 
-                                if(Uri.TryCreate(argsList[i + 1], UriKind.Absolute, out uri))
+                                if(Uri.TryCreate(argsList[i + 1], UriKind.Absolute, out var uri))
                                 {
                                     parsedArgs.Add(argsList[i], uri);
                                 }
@@ -256,8 +267,7 @@ namespace ExcelToTable
                             }
                         case SimpleArgType.Guid:
                             {
-                                Guid g;
-                                if(Guid.TryParse(argsList[i + 1], out g))
+                                if(Guid.TryParse(argsList[i + 1], out var g))
                                 {
                                     parsedArgs.Add(argsList[i], argsList[i + 1]);
                                 }
@@ -363,13 +373,18 @@ namespace ExcelToTable
 
         public void ShowUsage()
         {
+            SimpleArgParser.ShowUsage(this._SupportedArgs);
+        }
+
+        public static void ShowUsage(List<SimpleArg> SupportedArgs)
+        {
             //_SupportedArgs
 
             Console.WriteLine(String.Empty);
             StringBuilder sb = new StringBuilder();
             sb.Append(String.Format("Usage: {0}", System.AppDomain.CurrentDomain.FriendlyName));
 
-            foreach( var arg in this._SupportedArgs)
+            foreach (var arg in SupportedArgs)
             {
                 if (arg.Required)
                 {
@@ -384,13 +399,14 @@ namespace ExcelToTable
             Console.WriteLine(sb.ToString());
             Console.WriteLine(Environment.NewLine);
 
-            foreach (var arg in this._SupportedArgs)
+            foreach (var arg in SupportedArgs)
             {
                 Console.WriteLine(String.Format("{0}:\t\t{1}", arg.Name, arg.Description));
             }
 
             Console.WriteLine(Environment.NewLine);
         }
+
 
         private bool IsValidFilename(string Filename)
         {
