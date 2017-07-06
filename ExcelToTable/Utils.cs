@@ -165,22 +165,11 @@ namespace ExcelToTable
         /// <returns></returns>
         public static bool ValidateAppArgs(Dictionary<string, dynamic> ar)
         {
-            if (!System.IO.File.Exists(ar["-filename"]))
-            {
-                throw new ArgumentException(String.Format("Input file '{0}' does not exist", ar["-filename"]));
-            }
-            else if(ar.ContainsKey("-format"))
+            if(ar.ContainsKey("-format"))
             {
                 if ("html|wikitable|jsonarrays|jsonobjects".IndexOf(ar["-format"]) < 0)
                 {
                     throw new ArgumentException(String.Format("Output format '{0}' is not valid", ar["-format"]));
-                }
-            }
-            else if (ar.ContainsKey("-range"))
-            {
-                if (ExcelReader.ParseExcelRange(ar["-range"]) == null)
-                {
-                    throw new ArgumentException(String.Format("Range parameter is not valid: '{0}'", ar["-range"]));
                 }
             }
 

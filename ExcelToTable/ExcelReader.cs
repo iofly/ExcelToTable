@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using Microsoft.Office.Interop.Excel;
 using System.Text.RegularExpressions;
+using SimpleArgs;
 
 namespace ExcelToTable
 {
     public class ExcelReader
     {
-        const string Letters = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
         public static List<List<string>> ReadExcelRows(string ExcelFileName, out ResultCode ResultCode, out string ResultDesc, int worksheet = 1, WorkSheetRangeCoordinates wsrc = null)
         {
             List<List<string>> tablerows = new List<List<string>>();
@@ -116,112 +115,7 @@ namespace ExcelToTable
                 GC.Collect();
             }
         }
-
-        public static WorkSheetRangeCoordinates ParseExcelRange(string Range)
-        {
-            //BMZ4:BNC14
-            string regexPattern = @"([A-Z]{1,3})(\d{1,7}):([A-Z]{1,3})(\d{1,7})";
-            WorkSheetRangeCoordinates rangeCoords = new WorkSheetRangeCoordinates();
-            var matches = Regex.Matches(Range, regexPattern);
-
-            int colIndex = 0;
-            int letterIndex = 0;
-
-            if (matches.Count > 0)
-            {
-
-                string part1 = matches[0].Groups[1].Value;
-                char[] part1X = part1.ToCharArray();
-                Array.Reverse(part1X); //make first car the LSC
-                for (int i = 0; i < part1X.Length; i++)
-                {
-                    letterIndex = Letters.IndexOf(part1X[i]);
-                    colIndex += letterIndex *  Convert.ToInt32(Math.Pow(26, i));
-                }
-                rangeCoords.TopLeft.X = colIndex;
-                rangeCoords.TopLeft.Y = int.Parse(matches[0].Groups[2].Value);
-
-                colIndex = 0;
-
-                string part2 = matches[0].Groups[3].Value;
-                char[] part2X = part2.ToCharArray();
-                Array.Reverse(part2X); //make first car the LSC
-                for (int i = 0; i < part2X.Length; i++)
-                {
-                    letterIndex = Letters.IndexOf(part2X[i]);
-                    colIndex += letterIndex * Convert.ToInt32(Math.Pow(26, i));
-                }
-                rangeCoords.BottomRight.X = colIndex;
-                rangeCoords.BottomRight.Y = int.Parse(matches[0].Groups[4].Value);
-
-                if(!RangeIsValid(rangeCoords))
-                {
-                    return null;
-                }
-
-
-                return rangeCoords;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public static bool RangeIsValid(WorkSheetRangeCoordinates wsrc)
-        {
-            //Excel limits = 1,048,576 rows by 16,384 columns
-            if(wsrc == null)
-            {
-                return false;
-            }
-
-            return (wsrc.TopLeft.X <= 16384) && (wsrc.BottomRight.X <= 16384) && (wsrc.TopLeft.Y <= 1048576) && (wsrc.BottomRight.Y <= 1048576);
-
-            //long l = Math.Abs(Convert.ToInt64(wsrc.TopLeft.X - wsrc.BottomRight.X)) * Math.Abs(Convert.ToInt64(wsrc.TopLeft.Y - wsrc.BottomRight.Y));
-        }
     }
 
 
-    public class WorkSheetCoordinate
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-    }
-
-    public class WorkSheetRangeCoordinates
-    {
-        public WorkSheetRangeCoordinates()
-        {
-            _TopLeft = new WorkSheetCoordinate();
-            _BottomRight = new WorkSheetCoordinate();
-
-        }
-
-        private WorkSheetCoordinate _TopLeft;
-        public WorkSheetCoordinate TopLeft
-        {
-            get
-            {
-                return _TopLeft;
-            }
-            set
-            {
-                _TopLeft = value;
-            }
-        }
-
-        private WorkSheetCoordinate _BottomRight;
-        public WorkSheetCoordinate BottomRight
-        {
-            get
-            {
-                return _BottomRight;
-            }
-            set
-            {
-                _BottomRight = value;
-            }
-        }
-    }
 }
