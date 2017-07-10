@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleArgs;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,7 +7,6 @@ namespace ExcelToTable
 {
     public class Utils
     {
-        #region Output calls
         public static string RowsToWikiTable(List<List<string>> rows)
         {
             StringBuilder sb = new StringBuilder();
@@ -154,9 +154,40 @@ namespace ExcelToTable
             return sb.ToString();
         }
 
-        #endregion
+        public static void GenerateOutputFile(string format, List<List<string>> rows, string inputfile, string outfile = null)
+        {
+            string text = null;
+            string fileext = null;
+            if (format == "wikitable")
+            {
+                text = Utils.RowsToWikiTable(rows);
+                fileext = ".txt";
+            }
+            else if (format == "jsonobjects")
+            {
+                text = Utils.RowsToJSON_ArrayOfObjects(rows);
+                fileext = ".objects.json";
+            }
+            else if (format == "jsonarrays")
+            {
+                text = Utils.RowsToJSON_ArrayOfArrays(rows);
+                fileext = ".arrays.json";
+            }
+            else
+            {
+                text = Utils.RowsToHTMLTable(rows);
+                fileext = ".html";
+            }
 
-        #region Argument stuff
+            if (!String.IsNullOrWhiteSpace(outfile))
+            {
+                System.IO.File.WriteAllText(outfile, text);
+            }
+            else
+            {
+                System.IO.File.WriteAllText(System.IO.Path.GetFileName(inputfile) + fileext, text);
+            }
+        }
 
         /// <summary>
         /// App specific validation of arguments
@@ -173,9 +204,67 @@ namespace ExcelToTable
                 }
             }
 
+  
+
             return true;
         }
 
-        #endregion
+        public static SimpleArgParser GetArguments(List<SimpleArg> supportedArgs, string[] args)
+        {
+            SimpleArgParser parser = null;
+
+            //Validate against general rules as specified above.
+            try
+            {
+                parser = new SimpleArgParser(supportedArgs, args);
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(String.Empty);
+                Console.WriteLine(String.Format("Error: {0}", ex.Message));
+                SimpleArgParser.ShowUsage(supportedArgs);
+                throw ex;
+            }
+
+            //App specific validation of args
+            try
+            {
+                Utils.ValidateAppArgs(parser.ParsedArguments);
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+                parser.ShowUsage();
+                throw ex;
+            }
+
+            //Fix for filename ->abs filename - for case where app is called via batch file
+            if (!System.IO.Path.IsPathRooted(parser.ParsedArguments["-filename"]))
+            {
+                parser.ParsedArguments["-filename"] = System.IO.Path.GetFullPath(parser.ParsedArguments["-filename"]);
+            }
+
+            string outfile = string.Empty;
+            if (parser.ParsedArguments.ContainsKey("-outfile"))
+            {
+                outfile = System.IO.Path.GetFullPath(parser.ParsedArguments["-outfile"]);
+            }
+
+            WorkSheetRangeCoordinates wsrc = null;
+            if (parser.ParsedArguments.ContainsKey("-range"))
+            {
+                wsrc = SimpleArgParser.ParseExcelRange(parser.ParsedArguments["-range"]);
+                if (wsrc == null)
+                {
+                    Console.WriteLine(String.Empty);
+                    Console.WriteLine(String.Format("Error: Range parameter is not valid: -range => {0}", parser.ParsedArguments["-range"]));
+                    SimpleArgParser.ShowUsage(supportedArgs);
+                    return null;
+                }
+            }
+
+            return parser;
+
+        }
     }
 }

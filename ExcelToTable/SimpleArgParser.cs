@@ -600,7 +600,6 @@ namespace SimpleArgs
         {
             _TopLeft = new WorkSheetCoordinate();
             _BottomRight = new WorkSheetCoordinate();
-
         }
 
         private WorkSheetCoordinate _TopLeft;

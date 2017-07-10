@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Office.Interop.Excel;
-using System.Text.RegularExpressions;
 using SimpleArgs;
 
 namespace ExcelToTable
@@ -116,6 +115,4 @@ namespace ExcelToTable
             }
         }
     }
-
-
 }
