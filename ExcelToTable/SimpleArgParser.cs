@@ -76,6 +76,7 @@ namespace SimpleArgs
                         case SimpleArgType.String:
                             {
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
+
                                 break;
                             }
                         case SimpleArgType.FileName:
@@ -91,6 +92,7 @@ namespace SimpleArgs
                                 }
 
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
+
                                 break;
                             }
                         case SimpleArgType.NewFilename:
@@ -104,20 +106,13 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("Invalid filename for argument: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
-
-                                if (System.IO.File.Exists(argsList[i + 1]))
+                                else if (System.IO.File.Exists(argsList[i + 1]))
                                 {
                                     throw new ArgumentException(String.Format("File already exists: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
 
-                                //let app create the dirs
-                                //string AbsDir = string.Empty;
-                                //if (!DirPartExists(argsList[i + 1], out AbsDir))
-                                //{
-                                //    throw new ArgumentException(String.Format("Directory {0} does not exist. Cannot create output file.", AbsDir));
-                                //}
-
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
+
                                 break;
                             }
                         case SimpleArgType.ExistingFilename:
@@ -133,6 +128,7 @@ namespace SimpleArgs
                                 }
 
                                 parsedArgs.Add(argsList[i], argsList[i + 1]);
+
                                 break;
                             }
                         case SimpleArgType.Integer:
@@ -141,7 +137,9 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("Argument malformed. Expected integer: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
+
                                 parsedArgs.Add(argsList[i], testI);
+
                                 break;
                             }
                         case SimpleArgType.Decimal:
@@ -150,7 +148,9 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("Argument malformed. Expected decimal number: {0} => '{1}'", argsList[i], argsList[i + 1]));
                                 }
+
                                 parsedArgs.Add(argsList[i], testD);
+
                                 break;
                             }
                         case SimpleArgType.DateTime:
@@ -167,13 +167,15 @@ namespace SimpleArgs
                                         break;
                                     }
                                 }
-                                    
-                                if(!success)
+
+                                if (!success)
                                 {
                                     throw new ArgumentException(String.Format("DateTime argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
                                 }
-                      
-                                parsedArgs.Add(argsList[i], dt);
+                                else
+                                {
+                                    parsedArgs.Add(argsList[i], dt);
+                                }
                                 break;
                             }
                         case SimpleArgType.Date:
@@ -194,8 +196,11 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("Date argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
                                 }
+                                else
+                                {
+                                    parsedArgs.Add(argsList[i], dt);
+                                }
 
-                                parsedArgs.Add(argsList[i], dt);
                                 break;
                             }
                         case SimpleArgType.Time:
@@ -216,30 +221,31 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("Time argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
                                 }
+                                else
+                                {
+                                    parsedArgs.Add(argsList[i], dt);
+                                }
 
-                                parsedArgs.Add(argsList[i], dt);
                                 break;
                             }
                         case SimpleArgType.Boolean:
                             {
                                 string[] trues = { "true", "1", "yes", "y" };
                                 string[] falses = { "false", "0", "no", "n" };
-                                bool testB = false;
 
                                 if (trues.Contains(argsList[i + 1]))
                                 {
-                                    testB = true;
+                                    parsedArgs.Add(argsList[i], true);
                                 }
                                 else if (falses.Contains(argsList[i + 1]))
                                 {
-                                    testB = false;
+                                    parsedArgs.Add(argsList[i], false);
                                 }
                                 else
                                 {
                                     throw new ArgumentException(String.Format("Boolean argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}, {3}]", argsList[i], argsList[i + 1], String.Join(", ", trues), String.Join(", ", falses)));
                                 }
-
-                                parsedArgs.Add(argsList[i], testB);
+                                
                                 break;
                             }
                         case SimpleArgType.URI:
@@ -264,6 +270,7 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("Email argument malformed. Argument {0} => '{1}' is not a valid email address.", argsList[i], argsList[i + 1]));
                                 }
+
                                 break;
                             }
                         case SimpleArgType.Guid:
@@ -276,15 +283,39 @@ namespace SimpleArgs
                                 {
                                     throw new ArgumentException(String.Format("GUID argument malformed. Argument {0} => '{1}' is not a valid GUID.", argsList[i], argsList[i + 1]));
                                 }
+
                                 break;
                             }
                         case SimpleArgType.ExcelRange:
                             {
-                                if (ParseExcelRange(argsList[i + 1]) == null)
+                                var wsrcs = ParseExcelRange(argsList[i + 1]);
+                                if (wsrcs == null)
                                 {
-                                    throw new ArgumentException(String.Format("Range parameter is not valid: '{0}'", argsList[i + 1]));
+                                    throw new ArgumentException(String.Format("Worksheet range parameter is not valid: '{0}'", argsList[i + 1]));
                                 }
-                                
+                                else
+                                {
+                                    parsedArgs.Add(argsList[i], wsrcs);
+                                }
+
+                                break;
+                            }
+                        case SimpleArgType.ValueRange:
+                            {
+                                var sa = _SupportedArgs.Where(ar => ar.Name == argsList[i]).FirstOrDefault();
+                                if (sa == null)
+                                {
+                                    throw new ArgumentException(String.Format("ValueRange parameter is not valid: {0} = {1}", argsList[i], argsList[i + 1]));
+                                }
+                                else if (sa.ValueRange.IndexOf(argsList[i + 1]) < 0)
+                                {
+                                    throw new ArgumentException(String.Format("Value supplied for {0} is not in the valid range of values [{1}]", argsList[i], String.Join(", ", sa.ValueRange)));
+                                }
+                                else
+                                {
+                                    parsedArgs.Add(argsList[i], argsList[i + 1]);
+                                }
+
                                 break;
                             }
 
@@ -301,7 +332,6 @@ namespace SimpleArgs
             {
                 parsedArgs.Add(s, null);
             }
-
 
             //Check the inc/exc list:
             //If an arg is optional, its exclusion/inclusion list is ignored
@@ -373,11 +403,6 @@ namespace SimpleArgs
                 }
             }
 
-
-            
-
-            
-
             return parsedArgs;
         }
 
@@ -416,7 +441,6 @@ namespace SimpleArgs
 
             Console.WriteLine(Environment.NewLine);
         }
-
 
         private bool IsValidFilename(string Filename)
         {
@@ -462,7 +486,6 @@ namespace SimpleArgs
 
             return System.IO.Directory.Exists(AbsDirName);
         }
-
 
         public static WorkSheetRangeCoordinates ParseExcelRange(string Range)
         {
@@ -530,7 +553,7 @@ namespace SimpleArgs
         }
     }
 
-    public enum SimpleArgType { String = 0 , FileName, NewFilename, ExistingFilename, Integer, Decimal, Date, DateTime, Time, Boolean, URI, EmailAddress, Guid, ExcelRange }
+    public enum SimpleArgType { String = 0 , FileName, NewFilename, ExistingFilename, Integer, Decimal, Date, DateTime, Time, Boolean, URI, EmailAddress, Guid, ExcelRange, ValueRange }
 
     public class SimpleArg
     {
@@ -538,6 +561,7 @@ namespace SimpleArgs
         {
             _ExcludeArgs = new List<string>();
             _IncludeArgs = new List<string>();
+            _ValueRange = new List<string>();
         }
         public bool IsSwitch { get; set; }
 
@@ -586,6 +610,31 @@ namespace SimpleArgs
                 _IncludeArgs = value;
             }
         }
+
+
+
+
+
+        private List<string> _ValueRange;
+        /// <summary>
+        /// List of values that the parameter is permitted to have
+        /// </summary>
+        public List<string> ValueRange
+        {
+            get
+            {
+                return _ValueRange;
+            }
+            set
+            {
+                _ValueRange = value;
+            }
+        }
+
+
+
+
+
     }
 
     public class WorkSheetCoordinate

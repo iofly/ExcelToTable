@@ -154,61 +154,85 @@ namespace ExcelToTable
             return sb.ToString();
         }
 
+        public static void RowsToExcel(List<List<string>> rows, string OutExcelFileName)
+        {
+            ExcelReader.RowsToExcelFile(rows, OutExcelFileName);
+        }
+
         public static void GenerateOutputFile(string format, List<List<string>> rows, string inputfile, string outfile = null)
         {
             string text = null;
-            string fileext = null;
-            if (format == "wikitable")
+            outfile = outfile ?? GetDefaultOutputFileName(format);
+            if(!System.IO.Path.IsPathRooted(outfile))
             {
-                text = Utils.RowsToWikiTable(rows);
-                fileext = ".txt";
-            }
-            else if (format == "jsonobjects")
-            {
-                text = Utils.RowsToJSON_ArrayOfObjects(rows);
-                fileext = ".objects.json";
-            }
-            else if (format == "jsonarrays")
-            {
-                text = Utils.RowsToJSON_ArrayOfArrays(rows);
-                fileext = ".arrays.json";
-            }
-            else
-            {
-                text = Utils.RowsToHTMLTable(rows);
-                fileext = ".html";
+                outfile = String.Format("{0}\\{1}", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), outfile);
             }
 
-            if (!String.IsNullOrWhiteSpace(outfile))
+            switch (format)
             {
-                System.IO.File.WriteAllText(outfile, text);
-            }
-            else
-            {
-                System.IO.File.WriteAllText(System.IO.Path.GetFileName(inputfile) + fileext, text);
+                case "wikitable":
+                    {
+                        text = Utils.RowsToWikiTable(rows);
+                        System.IO.File.WriteAllText(outfile, text);
+                        break;
+                    }
+                case "jsonobjects":
+                    {
+                        text = Utils.RowsToJSON_ArrayOfObjects(rows);
+                        System.IO.File.WriteAllText(outfile, text);
+                        break;
+                    }
+                case "jsonarrays":
+                    {
+                        text = Utils.RowsToJSON_ArrayOfArrays(rows);
+                        System.IO.File.WriteAllText(outfile, text);
+                        break;
+                    }
+                case "excel":
+                    {
+                        Utils.RowsToExcel(rows, outfile);
+                        break;
+                    }
+                case "html":
+                default:
+                    {
+                        text = Utils.RowsToHTMLTable(rows);
+                        System.IO.File.WriteAllText(outfile, text);
+                        break;
+                    }
             }
         }
 
-        /// <summary>
-        /// App specific validation of arguments
-        /// </summary>
-        /// <param name="ar">Passed arguments</param>
-        /// <returns></returns>
-        public static bool ValidateAppArgs(Dictionary<string, dynamic> ar)
+        public static string GetDefaultOutputFileName(string format)
         {
-            if(ar.ContainsKey("-format"))
+            string s = DateTime.Now.ToString("output-yyyy-MM-dd HH-mm-ss");
+
+            switch(format)
             {
-                if ("html|wikitable|jsonarrays|jsonobjects".IndexOf(ar["-format"]) < 0)
-                {
-                    throw new ArgumentException(String.Format("Output format '{0}' is not valid", ar["-format"]));
-                }
+                case "wikitable":
+                    {
+                        return String.Format("{0}.txt", s);
+                    }
+                case "jsonobjects":
+                    {
+                        return String.Format("{0}.objects.json", s);
+                    }
+                case "jsonarrays":
+                    {
+                        return String.Format("{0}.arrays.json", s);
+                    }
+                case "excel":
+                    {
+                        return String.Format("{0}.xlsx", s);
+                    }
+                case "html":
+                default:
+                    {
+                        return String.Format("{0}.html", s);
+                    }
             }
-
-  
-
-            return true;
         }
-
+ 
         public static SimpleArgParser GetArguments(List<SimpleArg> supportedArgs, string[] args)
         {
             SimpleArgParser parser = null;
@@ -220,21 +244,6 @@ namespace ExcelToTable
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine(String.Empty);
-                Console.WriteLine(String.Format("Error: {0}", ex.Message));
-                SimpleArgParser.ShowUsage(supportedArgs);
-                throw ex;
-            }
-
-            //App specific validation of args
-            try
-            {
-                Utils.ValidateAppArgs(parser.ParsedArguments);
-            }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine(ex.Message);
-                parser.ShowUsage();
                 throw ex;
             }
 
@@ -249,6 +258,7 @@ namespace ExcelToTable
             {
                 outfile = System.IO.Path.GetFullPath(parser.ParsedArguments["-outfile"]);
             }
+           
 
             WorkSheetRangeCoordinates wsrc = null;
             if (parser.ParsedArguments.ContainsKey("-range"))
