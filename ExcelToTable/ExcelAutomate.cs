@@ -5,7 +5,7 @@ using SimpleArgs;
 
 namespace ExcelToTable
 {
-	public class ExcelReader
+	public class ExcelAutomate
 	{
 		public static List<List<string>> ReadExcelRows(string ExcelFileName, out ResultCode ResultCode, out string ResultDesc, int worksheet = 1, WorkSheetRangeCoordinates wsrc = null)
 		{
@@ -129,7 +129,7 @@ namespace ExcelToTable
 
 			try
 			{ 
-				xlApp.Visible = true;
+				xlApp.Visible = false;
 				xlWorkBook = xlApp.Workbooks.Add(XlWBATemplate.xlWBATWorksheet);
 				xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.Add(Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 				xlWorkSheet.Name = "Exported";

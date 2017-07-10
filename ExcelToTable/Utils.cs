@@ -156,7 +156,7 @@ namespace ExcelToTable
 
 		public static void RowsToExcel(List<List<string>> rows, string OutExcelFileName)
 		{
-			ExcelReader.RowsToExcelFile(rows, OutExcelFileName);
+			ExcelAutomate.RowsToExcelFile(rows, OutExcelFileName);
 		}
 
 		public static void GenerateOutputFile(string format, List<List<string>> rows, string inputfile, string outfile = null)

@@ -44,7 +44,7 @@ namespace ExcelToTable
 			}
 
 			//Read excel file
-			rows = ExcelReader.ReadExcelRows(parser.ParsedArguments["-filename"], 
+			rows = ExcelAutomate.ReadExcelRows(parser.ParsedArguments["-filename"], 
 											out rc, 
 											out ResultDesc, 
 											parser.ParsedArguments["-worksheet"],

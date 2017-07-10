@@ -413,8 +413,6 @@ namespace SimpleArgs
 
 		public static void ShowUsage(List<SimpleArg> SupportedArgs)
 		{
-			//_SupportedArgs
-
 			Console.WriteLine(String.Empty);
 			StringBuilder sb = new StringBuilder();
 			sb.Append(String.Format("Usage: {0}", System.AppDomain.CurrentDomain.FriendlyName));
@@ -563,7 +561,8 @@ namespace SimpleArgs
 			_IncludeArgs = new List<string>();
 			_ValueRange = new List<string>();
 		}
-		public bool IsSwitch { get; set; }
+
+        public bool IsSwitch { get; set; }
 
 		public string Name { get; set; }
 
@@ -577,9 +576,8 @@ namespace SimpleArgs
 
 		public SimpleArgType ArgType { get; set; }
 
-
-
-		private List<string> _ExcludeArgs;
+        #region Public Accessors
+        private List<string> _ExcludeArgs;
 		/// <summary>
 		/// List of argument names that MUST NOT be passed if this argument is passed.
 		/// </summary>
@@ -611,10 +609,6 @@ namespace SimpleArgs
 			}
 		}
 
-
-
-
-
 		private List<string> _ValueRange;
 		/// <summary>
 		/// List of values that the parameter is permitted to have
@@ -630,12 +624,8 @@ namespace SimpleArgs
 				_ValueRange = value;
 			}
 		}
-
-
-
-
-
-	}
+        #endregion
+    }
 
 	public class WorkSheetCoordinate
 	{
