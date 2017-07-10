@@ -205,7 +205,7 @@ namespace ExcelToTable
 
         public static string GetDefaultOutputFileName(string format)
         {
-            string s = DateTime.Now.ToString("output-yyyy-MM-dd HH-mm-ss");
+            string s = String.Format("output-{0}", DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
 
             switch(format)
             {

@@ -115,26 +115,17 @@ namespace ExcelToTable
             }
         }
 
-
-
-
         public static void RowsToExcelFile(List<List<string>> ExcelData, string OutExcelFileName)
         {
-            Microsoft.Office.Interop.Excel.Application xlApp = new Microsoft.Office.Interop.Excel.Application();
+            var xlApp = new Microsoft.Office.Interop.Excel.Application();
             Workbook xlWorkBook = null;
             Worksheet xlWorkSheet = null;
 
-            //create excel file, get handle to com obj or whatever
-            object dummyOfficeDocHandle = new object(); //ExcelFileName
-
-
-            xlApp = new Microsoft.Office.Interop.Excel.Application();
             if (xlApp == null)
             {
                 ReleaseObject(xlApp);
                 throw new Exception("EXCEL could not be started. Check that your office installation and project references are correct.");
             }
-
 
             try
             { 
@@ -143,26 +134,11 @@ namespace ExcelToTable
                 xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.Add(Type.Missing, Type.Missing, Type.Missing, Type.Missing);
                 xlWorkSheet.Name = "Exported";
 
-
-
-
-                #region Create header
                 Range NewCell;
-                //NewCell = (Range)xlWorkSheet.Cells[2, 1];
-                //NewCell.Value2 = "Key";
-                //NewCell.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.LightGray);
-                //NewCell = (Range)xlWorkSheet.Cells[2, 2];
-                //NewCell.Value2 = "Translated Value";
-                //NewCell.Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.LightGray);
-                //NewCell.EntireRow.Font.Bold = true;
-                //NewCell.EntireRow.Font.Size = 14;
-                //((Range)xlWorkSheet.Cells[1, 1]).EntireColumn.ColumnWidth = 45;
-                //((Range)xlWorkSheet.Cells[1, 2]).EntireColumn.ColumnWidth = 200;
-                #endregion
-
                 int i = 3;
                 int rowindex = 0;
                 int colindex = 0;
+
                 foreach (var row in ExcelData)
                 {
                     colindex = 0;
@@ -170,16 +146,18 @@ namespace ExcelToTable
                     {
                         NewCell = (Range)xlWorkSheet.Cells[rowindex + 1, colindex + 1];
                         NewCell.Value = col;
-                        NewCell.Font.Bold = true;
+                        NewCell.Font.Bold = rowindex == 0;
                         colindex++;
                     }
                     i++;
                     rowindex++;
                 }
 
+                Range used_range = xlWorkSheet.UsedRange;
+                used_range.Columns.AutoFit();
                 xlWorkBook.SaveAs(OutExcelFileName);
             }
-            catch// (Exception ex1)
+            catch
             {
                 
             }
