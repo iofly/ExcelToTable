@@ -28,6 +28,7 @@ namespace ExcelToTable
 			{
 				//Parse and validate arguments
 				parser = Utils.GetArguments(supportedArgs, args);
+
 				if (parser == null)
 				{
 					Console.WriteLine(String.Empty);
@@ -58,7 +59,6 @@ namespace ExcelToTable
 			//Produce output
 			Utils.GenerateOutputFile(parser.ParsedArguments["-format"], 
 											rows, 
-											parser.ParsedArguments["-filename"], 
 											parser.ParsedArguments.ContainsKey("-outfile") ? parser.ParsedArguments["-outfile"] : null);
 		}
 	}

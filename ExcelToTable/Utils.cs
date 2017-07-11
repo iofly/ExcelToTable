@@ -159,7 +159,7 @@ namespace ExcelToTable
 			ExcelAutomate.RowsToExcelFile(rows, OutExcelFileName);
 		}
 
-		public static void GenerateOutputFile(string format, List<List<string>> rows, string inputfile, string outfile = null)
+		public static void GenerateOutputFile(string format, List<List<string>> rows, string outfile = null)
 		{
 			string text = null;
 			outfile = outfile ?? GetDefaultOutputFileName(format);
@@ -247,16 +247,10 @@ namespace ExcelToTable
 				throw ex;
 			}
 
-			//Fix for filename ->abs filename - for case where app is called via batch file
+			//Fix for filename ->abs filename - for case where app is called via batch file, current path is different
 			if (!System.IO.Path.IsPathRooted(parser.ParsedArguments["-filename"]))
 			{
 				parser.ParsedArguments["-filename"] = System.IO.Path.GetFullPath(parser.ParsedArguments["-filename"]);
-			}
-
-			string outfile = string.Empty;
-			if (parser.ParsedArguments.ContainsKey("-outfile"))
-			{
-				outfile = System.IO.Path.GetFullPath(parser.ParsedArguments["-outfile"]);
 			}
 
 			return parser;
