@@ -258,20 +258,6 @@ namespace ExcelToTable
 			{
 				outfile = System.IO.Path.GetFullPath(parser.ParsedArguments["-outfile"]);
 			}
-		   
-
-			WorkSheetRangeCoordinates wsrc = null;
-			if (parser.ParsedArguments.ContainsKey("-range"))
-			{
-				wsrc = SimpleArgParser.ParseExcelRange(parser.ParsedArguments["-range"]);
-				if (wsrc == null)
-				{
-					Console.WriteLine(String.Empty);
-					Console.WriteLine(String.Format("Error: Range parameter is not valid: -range => {0}", parser.ParsedArguments["-range"]));
-					SimpleArgParser.ShowUsage(supportedArgs);
-					return null;
-				}
-			}
 
 			return parser;
 
