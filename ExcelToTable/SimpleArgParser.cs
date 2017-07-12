@@ -318,7 +318,6 @@ namespace SimpleArgs
 
 								break;
 							}
-
 					}
 				}
 				else
@@ -338,7 +337,6 @@ namespace SimpleArgs
 			//If an arg is required it will have no effect if included in an exclusion or inclusion list
 			var argumentsWithExclusionList = this._RequiredArgs.Where(a => (a.ExcludeArgs != null) && (a.Required == true)).ToList();
 			var argumentsWithInclusionList = this._RequiredArgs.Where(a => (a.IncludeArgs != null) && (a.Required == true)).ToList();
-
 		   
 			//Check exclusion
 			foreach (var arg in parsedArgs)
@@ -349,7 +347,6 @@ namespace SimpleArgs
 					throw new ArgumentException(String.Format("Argument '{0}' cannot be passed if argument '{1}' has been passed.", arg.Key, argExcludeCheck.Name));
 				}
 			}
-
 		   
 			//Check Inclusion
 			foreach (var argI in argumentsWithInclusionList)
@@ -368,9 +365,6 @@ namespace SimpleArgs
 					}
 				}
 			}
-
-
-
 
 			//Check that required arguments were passed
 			if (_RequiredArgs != null)
@@ -551,7 +545,24 @@ namespace SimpleArgs
 		}
 	}
 
-	public enum SimpleArgType { String = 0 , FileName, NewFilename, ExistingFilename, Integer, Decimal, Date, DateTime, Time, Boolean, URI, EmailAddress, Guid, ExcelRange, ValueRange }
+	public enum SimpleArgType
+    {
+        String = 0,
+        FileName,
+        NewFilename,
+        ExistingFilename,
+        Integer,
+        Decimal,
+        Date,
+        DateTime,
+        Time,
+        Boolean,
+        URI,
+        EmailAddress,
+        Guid,
+        ExcelRange,
+        ValueRange
+    }
 
 	public class SimpleArg
 	{
