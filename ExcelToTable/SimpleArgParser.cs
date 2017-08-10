@@ -1,53 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Globalization;
 using System.Text.RegularExpressions;
+using System.IO;
 
-namespace SimpleArgs
+namespace ExcelToTable
 {
 	public class SimpleArgParser
 	{
-		private List<SimpleArg> _SupportedArgs;
-		private List<SimpleArg> _RequiredArgs;
-		private List<SimpleArg> _SupportedSwitches;
-		private List<SimpleArg> _OptionalArgsWithDefaultValue;
-		private Dictionary<string, dynamic> _ParsedArguments;
+		private readonly List<SimpleArg> _supportedArgs;
+		private readonly List<SimpleArg> _requiredArgs;
+		private readonly List<SimpleArg> _supportedSwitches;
+		private readonly List<SimpleArg> _optionalArgsWithDefaultValue;
 
-		public Dictionary<string, dynamic> ParsedArguments
+		public Dictionary<string, dynamic> ParsedArguments { get; set; }
+
+		public SimpleArgParser(List<SimpleArg> supportedArgs, string[] args)
 		{
-			get
-			{
-				return _ParsedArguments;
-			}
-			set
-			{
-				_ParsedArguments = value;
-			}
+			_supportedArgs = supportedArgs;
+			_requiredArgs = _supportedArgs.Where(sa => sa.Required).ToList();
+			_optionalArgsWithDefaultValue = _supportedArgs.Where(sa => (sa.Required == false) && (sa.DefaultValue!=null)).ToList();
+			_supportedSwitches = _supportedArgs.Where(sa => sa.IsSwitch).ToList();
+			ParsedArguments = ParseArgs(args);
 		}
 
-		public SimpleArgParser(List<SimpleArg> SupportedArgs, string[] args)
+		private Dictionary<string, dynamic> ParseArgs(string[] args)
 		{
-			_SupportedArgs = SupportedArgs;
-			_RequiredArgs = _SupportedArgs.Where(sa => sa.Required == true).ToList();
-			_OptionalArgsWithDefaultValue = _SupportedArgs.Where(sa => (sa.Required == false) && (sa.DefaultValue!=null)).ToList();
-			_SupportedSwitches = _SupportedArgs.Where(sa => sa.IsSwitch == true).ToList();
-			_ParsedArguments = this.ParseArgs(args);
-		}
-
-		private Dictionary<string, dynamic> ParseArgs(string[] Args)
-		{
-			List<string> SuppliedSwitches = new List<string>();
-			List<string> argsList = Args.ToList<string>();
+			var suppliedSwitches = new List<string>();
+			var argsList = args.ToList();
 
 			//Remove Switches before key pair matching
-			foreach (var supportedSwitch in _SupportedSwitches)
+			foreach (var supportedSwitch in _supportedSwitches)
 			{
 				var ind = argsList.IndexOf(supportedSwitch.Name);
 				if (ind >= 0)
 				{
-					SuppliedSwitches.Add(supportedSwitch.Name);
+					suppliedSwitches.Add(supportedSwitch.Name);
 					argsList.RemoveAt(ind);
 				}
 			}
@@ -58,15 +48,15 @@ namespace SimpleArgs
 			{
 				if (parsedArgs.ContainsKey(argsList[i]))
 				{
-					throw new ArgumentException(String.Format("Duplicate argument {0}", argsList[i]));
+					throw new ArgumentException($"Duplicate argument {argsList[i]}");
 				}
 
 				if(i<argsList.Count-1)
 				{
-					var supportedArg = _SupportedArgs.Where(sa => sa.Name == argsList[i]).FirstOrDefault();
+					var supportedArg = _supportedArgs.FirstOrDefault(sa => sa.Name == argsList[i]);
 					if(supportedArg==null)
 					{
-						throw new ArgumentException(String.Format("Argument not supported: {0}", argsList[i]));
+						throw new ArgumentException($"Argument not supported: {argsList[i]}");
 					}
 
 					CultureInfo provider = CultureInfo.InvariantCulture;
@@ -81,14 +71,14 @@ namespace SimpleArgs
 							}
 						case SimpleArgType.FileName:
 							{
-								if (!System.IO.Path.IsPathRooted(argsList[i + 1]))
+								if (!Path.IsPathRooted(argsList[i + 1]))
 								{
-									argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
+									argsList[i + 1] = Path.GetFullPath(argsList[i + 1]);
 								}
 
 								if (!IsValidFilename(argsList[i + 1]))
 								{
-									throw new ArgumentException(String.Format("Invalid filename for argument: {0} => '{1}'", argsList[i], argsList[i + 1]));
+									throw new ArgumentException($"Invalid filename for argument: {argsList[i]} => '{argsList[i + 1]}'");
 								}
 
 								parsedArgs.Add(argsList[i], argsList[i + 1]);
@@ -97,18 +87,18 @@ namespace SimpleArgs
 							}
 						case SimpleArgType.NewFilename:
 							{
-								if(!System.IO.Path.IsPathRooted(argsList[i + 1]))
+								if(!Path.IsPathRooted(argsList[i + 1]))
 								{
-									argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
+									argsList[i + 1] = Path.GetFullPath(argsList[i + 1]);
 								}
 
 								if(!IsValidFilename(argsList[i + 1]))
 								{
-									throw new ArgumentException(String.Format("Invalid filename for argument: {0} => '{1}'", argsList[i], argsList[i + 1]));
+									throw new ArgumentException($"Invalid filename for argument: {argsList[i]} => '{argsList[i + 1]}'");
 								}
-								else if (System.IO.File.Exists(argsList[i + 1]))
+								else if (File.Exists(argsList[i + 1]))
 								{
-									throw new ArgumentException(String.Format("File already exists: {0} => '{1}'", argsList[i], argsList[i + 1]));
+									throw new ArgumentException($"File already exists: {argsList[i]} => '{argsList[i + 1]}'");
 								}
 
 								parsedArgs.Add(argsList[i], argsList[i + 1]);
@@ -117,14 +107,14 @@ namespace SimpleArgs
 							}
 						case SimpleArgType.ExistingFilename:
 							{
-								if (!System.IO.Path.IsPathRooted(argsList[i + 1]))
+								if (!Path.IsPathRooted(argsList[i + 1]))
 								{
-									argsList[i + 1] = System.IO.Path.GetFullPath(argsList[i + 1]);
+									argsList[i + 1] = Path.GetFullPath(argsList[i + 1]);
 								}
 
-								if (!System.IO.File.Exists(argsList[i + 1]))
+								if (!File.Exists(argsList[i + 1]))
 								{
-									throw new ArgumentException(String.Format("File not found: {0} => '{1}'", argsList[i], argsList[i + 1]));
+									throw new ArgumentException($"File not found: {argsList[i]} => '{argsList[i + 1]}'");
 								}
 
 								parsedArgs.Add(argsList[i], argsList[i + 1]);
@@ -135,7 +125,7 @@ namespace SimpleArgs
 							{
 								if(!int.TryParse(argsList[i + 1], out var testI))
 								{
-									throw new ArgumentException(String.Format("Argument malformed. Expected integer: {0} => '{1}'", argsList[i], argsList[i + 1]));
+									throw new ArgumentException($"Argument malformed. Expected integer: {argsList[i]} => '{argsList[i + 1]}'");
 								}
 
 								parsedArgs.Add(argsList[i], testI);
@@ -146,7 +136,8 @@ namespace SimpleArgs
 							{
 								if (!double.TryParse(argsList[i + 1], NumberStyles.Float, provider, out var testD))
 								{
-									throw new ArgumentException(String.Format("Argument malformed. Expected decimal number: {0} => '{1}'", argsList[i], argsList[i + 1]));
+									throw new ArgumentException(
+										$"Argument malformed. Expected decimal number: {argsList[i]} => '{argsList[i + 1]}'");
 								}
 
 								parsedArgs.Add(argsList[i], testD);
@@ -170,7 +161,8 @@ namespace SimpleArgs
 
 								if (!success)
 								{
-									throw new ArgumentException(String.Format("DateTime argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
+									throw new ArgumentException(
+										$"DateTime argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not in a supported format. Supported formats: [{String.Join(", ", supportedDateTimeFormats)}]");
 								}
 								else
 								{
@@ -194,7 +186,8 @@ namespace SimpleArgs
 
 								if (!success)
 								{
-									throw new ArgumentException(String.Format("Date argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
+									throw new ArgumentException(
+										$"Date argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not in a supported format. Supported formats: [{String.Join(", ", supportedDateTimeFormats)}]");
 								}
 								else
 								{
@@ -219,7 +212,8 @@ namespace SimpleArgs
 
 								if (!success)
 								{
-									throw new ArgumentException(String.Format("Time argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}]", argsList[i], argsList[i + 1], String.Join(", ", supportedDateTimeFormats)));
+									throw new ArgumentException(
+										$"Time argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not in a supported format. Supported formats: [{String.Join(", ", supportedDateTimeFormats)}]");
 								}
 								else
 								{
@@ -243,12 +237,13 @@ namespace SimpleArgs
 								}
 								else
 								{
-									throw new ArgumentException(String.Format("Boolean argument malformed. Argument {0} => '{1}' is not in a supported format. Supported formats: [{2}, {3}]", argsList[i], argsList[i + 1], String.Join(", ", trues), String.Join(", ", falses)));
+									throw new ArgumentException(
+										$"Boolean argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not in a supported format. Supported formats: [{String.Join(", ", trues)}, {String.Join(", ", falses)}]");
 								}
 								
 								break;
 							}
-						case SimpleArgType.URI:
+						case SimpleArgType.Uri:
 							{
 								if(Uri.TryCreate(argsList[i + 1], UriKind.Absolute, out var uri))
 								{
@@ -256,32 +251,35 @@ namespace SimpleArgs
 								}
 								else
 								{
-									throw new ArgumentException(String.Format("URI argument malformed. Argument {0} => '{1}' is not in a supported URI format.", argsList[i], argsList[i + 1]));
+									throw new ArgumentException(
+										$"URI argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not in a supported URI format.");
 								}
 								break;
 							}
 						case SimpleArgType.EmailAddress:
 							{
-								if (System.Text.RegularExpressions.Regex.IsMatch(argsList[i + 1], @"^([\w\.\-]+)@([\w\-]+)((\.(\w){ 2,3})+)$"))
+								if (Regex.IsMatch(argsList[i + 1], @"^([\w\.\-]+)@([\w\-]+)((\.(\w){ 2,3})+)$"))
 								{
 									parsedArgs.Add(argsList[i], argsList[i + 1]);
 								}
 								else
 								{
-									throw new ArgumentException(String.Format("Email argument malformed. Argument {0} => '{1}' is not a valid email address.", argsList[i], argsList[i + 1]));
+									throw new ArgumentException(
+										$"Email argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not a valid email address.");
 								}
 
 								break;
 							}
 						case SimpleArgType.Guid:
 							{
-								if(Guid.TryParse(argsList[i + 1], out var g))
-								{
+								if(Regex.IsMatch(argsList[i + 1], @"^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$", RegexOptions.IgnoreCase))
+								{ 
 									parsedArgs.Add(argsList[i], argsList[i + 1]);
 								}
 								else
 								{
-									throw new ArgumentException(String.Format("GUID argument malformed. Argument {0} => '{1}' is not a valid GUID.", argsList[i], argsList[i + 1]));
+									throw new ArgumentException(
+										$"GUID argument malformed. Argument {argsList[i]} => '{argsList[i + 1]}' is not a valid GUID.");
 								}
 
 								break;
@@ -291,7 +289,7 @@ namespace SimpleArgs
 								var wsrcs = ParseExcelRange(argsList[i + 1]);
 								if (wsrcs == null)
 								{
-									throw new ArgumentException(String.Format("Worksheet range parameter is not valid: '{0}'", argsList[i + 1]));
+									throw new ArgumentException($"Worksheet range parameter is not valid: '{argsList[i + 1]}'");
 								}
 								else
 								{
@@ -302,14 +300,15 @@ namespace SimpleArgs
 							}
 						case SimpleArgType.ValueRange:
 							{
-								var sa = _SupportedArgs.Where(ar => ar.Name == argsList[i]).FirstOrDefault();
+								var sa = _supportedArgs.FirstOrDefault(ar => ar.Name == argsList[i]);
 								if (sa == null)
 								{
-									throw new ArgumentException(String.Format("ValueRange parameter is not valid: {0} = {1}", argsList[i], argsList[i + 1]));
+									throw new ArgumentException($"ValueRange parameter is not valid: {argsList[i]} = {argsList[i + 1]}");
 								}
 								else if (sa.ValueRange.IndexOf(argsList[i + 1]) < 0)
 								{
-									throw new ArgumentException(String.Format("Value supplied for {0} is not in the valid range of values [{1}]", argsList[i], String.Join(", ", sa.ValueRange)));
+									throw new ArgumentException(
+										$"Value supplied for {argsList[i]} is not in the valid range of values [{String.Join(", ", sa.ValueRange)}]");
 								}
 								else
 								{
@@ -327,7 +326,7 @@ namespace SimpleArgs
 			}
 
 			//Add the switches back to the end
-			foreach(string s in SuppliedSwitches)
+			foreach(string s in suppliedSwitches)
 			{
 				parsedArgs.Add(s, null);
 			}
@@ -335,16 +334,17 @@ namespace SimpleArgs
 			//Check the inc/exc list:
 			//If an arg is optional, its exclusion/inclusion list is ignored
 			//If an arg is required it will have no effect if included in an exclusion or inclusion list
-			var argumentsWithExclusionList = this._RequiredArgs.Where(a => (a.ExcludeArgs != null) && (a.Required == true)).ToList();
-			var argumentsWithInclusionList = this._RequiredArgs.Where(a => (a.IncludeArgs != null) && (a.Required == true)).ToList();
+			var argumentsWithExclusionList = _requiredArgs.Where(a => (a.ExcludeArgs != null) && (a.Required)).ToList();
+			var argumentsWithInclusionList = _requiredArgs.Where(a => (a.IncludeArgs != null) && (a.Required)).ToList();
 		   
 			//Check exclusion
 			foreach (var arg in parsedArgs)
 			{
-				var argExcludeCheck = argumentsWithExclusionList.Where(fa => fa.ExcludeArgs.Contains(arg.Key)).FirstOrDefault();
+				var argExcludeCheck = argumentsWithExclusionList.FirstOrDefault(fa => fa.ExcludeArgs.Contains(arg.Key));
 				if(argExcludeCheck!=null)
 				{
-					throw new ArgumentException(String.Format("Argument '{0}' cannot be passed if argument '{1}' has been passed.", arg.Key, argExcludeCheck.Name));
+					throw new ArgumentException(
+						$"Argument '{arg.Key}' cannot be passed if argument '{argExcludeCheck.Name}' has been passed.");
 				}
 			}
 		   
@@ -361,19 +361,19 @@ namespace SimpleArgs
 				{
 					if (!parsedArgs.ContainsKey(s))
 					{
-						throw new ArgumentException(String.Format("Argument '{0}' must be passed if argument '{1}' has been passed.", s, argI.Name));
+						throw new ArgumentException($"Argument '{s}' must be passed if argument '{argI.Name}' has been passed.");
 					}
 				}
 			}
 
 			//Check that required arguments were passed
-			if (_RequiredArgs != null)
+			if (_requiredArgs != null)
 			{
-				foreach (var pa in _RequiredArgs)
+				foreach (var pa in _requiredArgs)
 				{
 					if (!parsedArgs.ContainsKey(pa.Name))
 					{
-						throw new ArgumentException(String.Format("Required argument {0} not provided", pa.Name));
+						throw new ArgumentException($"Required argument {pa.Name} not provided");
 					}
 				}
 			}
@@ -381,15 +381,15 @@ namespace SimpleArgs
 			//Check that no unsupported arguments passed
 			foreach (var arg in parsedArgs)
 			{
-				var sa = this._SupportedArgs.Where(a => a.Name == arg.Key).FirstOrDefault();
+				var sa = _supportedArgs.FirstOrDefault(a => a.Name == arg.Key);
 				if (sa == null)
 				{
-					throw new ArgumentException(String.Format("Argument not recognised: {0}", arg.Key));
+					throw new ArgumentException($"Argument not recognised: {arg.Key}");
 				}
 			}
 
 			//Add defaults for optional args not passed
-			foreach (var optionalArg in _OptionalArgsWithDefaultValue)
+			foreach (var optionalArg in _optionalArgsWithDefaultValue)
 			{
 				if(!parsedArgs.ContainsKey(optionalArg.Name))
 				{
@@ -402,55 +402,48 @@ namespace SimpleArgs
 
 		public void ShowUsage()
 		{
-			SimpleArgParser.ShowUsage(this._SupportedArgs);
+			ShowUsage(_supportedArgs);
 		}
 
-		public static void ShowUsage(List<SimpleArg> SupportedArgs)
+		public static void ShowUsage(List<SimpleArg> supportedArgs)
 		{
 			Console.WriteLine(String.Empty);
 			StringBuilder sb = new StringBuilder();
-			sb.Append(String.Format("Usage: {0}", System.AppDomain.CurrentDomain.FriendlyName));
+			sb.Append($"Usage: {AppDomain.CurrentDomain.FriendlyName}");
 
-			foreach (var arg in SupportedArgs)
+			foreach (var arg in supportedArgs)
 			{
-				if (arg.Required)
-				{
-					sb.Append(String.Format(" {0} {1}", arg.Name, arg.ExmaplePlaceholder));
-				}
-				else
-				{
-					sb.Append(String.Format(" {0} [{1}]", arg.Name, arg.ExmaplePlaceholder));
-				}
+				sb.Append(arg.Required ? $" {arg.Name} {arg.ExmaplePlaceholder}" : $" {arg.Name} [{arg.ExmaplePlaceholder}]");
 			}
 
 			Console.WriteLine(sb.ToString());
 			Console.WriteLine(Environment.NewLine);
 
-			foreach (var arg in SupportedArgs)
+			foreach (var arg in supportedArgs)
 			{
-				Console.WriteLine(String.Format("{0}:\t\t{1}", arg.Name, arg.Description));
+				Console.WriteLine($"{arg.Name}:\t\t{arg.Description}");
 			}
 
 			Console.WriteLine(Environment.NewLine);
 		}
 
-		private bool IsValidFilename(string Filename)
+		private bool IsValidFilename(string filename)
 		{
-			if (((!string.IsNullOrEmpty(Filename)) && (Filename.IndexOfAny(System.IO.Path.GetInvalidPathChars()) >= 0)) == false)
+			if (((!string.IsNullOrEmpty(filename)) && (filename.IndexOfAny(Path.GetInvalidPathChars()) >= 0)) == false)
 			{
 				return false;
 			}
 
 			//check for 2 seperators in a row in filename, except the start
-			string sep2 = String.Format("{0}{0}", System.IO.Path.DirectorySeparatorChar);
-			if (Filename.IndexOf(sep2)>=1) //check fron 2nd char on, don't disallow \\ at start of filename, its a valid UNC path root
+			string sep2 = String.Format("{0}{0}", Path.DirectorySeparatorChar);
+			if (filename.IndexOf(sep2, StringComparison.Ordinal)>=1) //check fron 2nd char on, don't disallow \\ at start of filename, its a valid UNC path root
 			{
 				return false;
 			}
 
 			//Check for trailing spaces in dir path elements
-			char[] sep = { System.IO.Path.DirectorySeparatorChar };
-			string[] parts = Filename.Split(sep);
+			char[] sep = { Path.DirectorySeparatorChar };
+			string[] parts = filename.Split(sep);
 
 			foreach(string s in parts)
 			{
@@ -467,38 +460,24 @@ namespace SimpleArgs
 			return true;
 		}
 
-		private bool DirPartExists(string Filename, out string AbsDirName)
+		public static WorkSheetRangeCoordinates ParseExcelRange(string range)
 		{
-			if(System.IO.Path.IsPathRooted(Filename))
-			{
-				Filename = System.IO.Path.GetFullPath(Filename);
-			}
-
-			AbsDirName = System.IO.Path.GetDirectoryName(Filename);
-
-			return System.IO.Directory.Exists(AbsDirName);
-		}
-
-		public static WorkSheetRangeCoordinates ParseExcelRange(string Range)
-		{
-			const string Letters = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			const string letters = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			//BMZ4:BNC14
 			string regexPattern = @"([A-Z]{1,3})(\d{1,7}):([A-Z]{1,3})(\d{1,7})";
 			WorkSheetRangeCoordinates rangeCoords = new WorkSheetRangeCoordinates();
-			var matches = Regex.Matches(Range, regexPattern);
-
+			var matches = Regex.Matches(range, regexPattern);
 			int colIndex = 0;
-			int letterIndex = 0;
 
 			if (matches.Count > 0)
 			{
-
+				int letterIndex;
 				string part1 = matches[0].Groups[1].Value;
 				char[] part1X = part1.ToCharArray();
 				Array.Reverse(part1X); //make first car the LSC
 				for (int i = 0; i < part1X.Length; i++)
 				{
-					letterIndex = Letters.IndexOf(part1X[i]);
+					letterIndex = letters.IndexOf(part1X[i]);
 					colIndex += letterIndex * Convert.ToInt32(Math.Pow(26, i));
 				}
 				rangeCoords.TopLeft.X = colIndex;
@@ -511,7 +490,7 @@ namespace SimpleArgs
 				Array.Reverse(part2X); //make first car the LSC
 				for (int i = 0; i < part2X.Length; i++)
 				{
-					letterIndex = Letters.IndexOf(part2X[i]);
+					letterIndex = letters.IndexOf(part2X[i]);
 					colIndex += letterIndex * Convert.ToInt32(Math.Pow(26, i));
 				}
 				rangeCoords.BottomRight.X = colIndex;
@@ -546,34 +525,35 @@ namespace SimpleArgs
 	}
 
 	public enum SimpleArgType
-    {
-        String = 0,
-        FileName,
-        NewFilename,
-        ExistingFilename,
-        Integer,
-        Decimal,
-        Date,
-        DateTime,
-        Time,
-        Boolean,
-        URI,
-        EmailAddress,
-        Guid,
-        ExcelRange,
-        ValueRange
-    }
+	{
+		String = 0,
+		FileName,
+		NewFilename,
+		ExistingFilename,
+		Integer,
+		Decimal,
+		Date,
+		DateTime,
+		Time,
+		Boolean,
+		Uri,
+		EmailAddress,
+		Guid,
+		ExcelRange,
+		ValueRange, 
+        Switch
+	}
 
 	public class SimpleArg
 	{
 		public SimpleArg()
 		{
-			_ExcludeArgs = new List<string>();
-			_IncludeArgs = new List<string>();
-			_ValueRange = new List<string>();
+			ExcludeArgs = new List<string>();
+			IncludeArgs = new List<string>();
+			ValueRange = new List<string>();
 		}
 
-        public bool IsSwitch { get; set; }
+		public bool IsSwitch { get; set; }
 
 		public string Name { get; set; }
 
@@ -587,56 +567,25 @@ namespace SimpleArgs
 
 		public SimpleArgType ArgType { get; set; }
 
-        #region Public Accessors
-        private List<string> _ExcludeArgs;
+		#region Public Accessors
+
 		/// <summary>
 		/// List of argument names that MUST NOT be passed if this argument is passed.
 		/// </summary>
-		public List<string> ExcludeArgs
-		{
-			get
-			{
-				return _ExcludeArgs;
-			}
-			set
-			{
-				_ExcludeArgs = value;
-			}
-		}
+		public List<string> ExcludeArgs { get; set; }
 
-		private List<string> _IncludeArgs;
 		/// <summary>
 		/// List of argument names that MUST be passed if this argument is passed.
 		/// </summary>
-		public List<string> IncludeArgs
-		{
-			get
-			{
-				return _IncludeArgs;
-			}
-			set
-			{
-				_IncludeArgs = value;
-			}
-		}
+		public List<string> IncludeArgs { get; set; }
 
-		private List<string> _ValueRange;
 		/// <summary>
 		/// List of values that the parameter is permitted to have
 		/// </summary>
-		public List<string> ValueRange
-		{
-			get
-			{
-				return _ValueRange;
-			}
-			set
-			{
-				_ValueRange = value;
-			}
-		}
-        #endregion
-    }
+		public List<string> ValueRange { get; set; }
+
+		#endregion
+	}
 
 	public class WorkSheetCoordinate
 	{
@@ -648,34 +597,12 @@ namespace SimpleArgs
 	{
 		public WorkSheetRangeCoordinates()
 		{
-			_TopLeft = new WorkSheetCoordinate();
-			_BottomRight = new WorkSheetCoordinate();
+			TopLeft = new WorkSheetCoordinate();
+			BottomRight = new WorkSheetCoordinate();
 		}
 
-		private WorkSheetCoordinate _TopLeft;
-		public WorkSheetCoordinate TopLeft
-		{
-			get
-			{
-				return _TopLeft;
-			}
-			set
-			{
-				_TopLeft = value;
-			}
-		}
+		public WorkSheetCoordinate TopLeft { get; set; }
 
-		private WorkSheetCoordinate _BottomRight;
-		public WorkSheetCoordinate BottomRight
-		{
-			get
-			{
-				return _BottomRight;
-			}
-			set
-			{
-				_BottomRight = value;
-			}
-		}
+		public WorkSheetCoordinate BottomRight { get; set; }
 	}
 }

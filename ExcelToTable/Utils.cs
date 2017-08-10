@@ -1,7 +1,8 @@
-﻿using SimpleArgs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Web;
+using System.IO;
 
 namespace ExcelToTable
 {
@@ -47,15 +48,17 @@ namespace ExcelToTable
 
 			sb.Append(Environment.NewLine);
 			sb.Append("|}");
-
 			return sb.ToString();
-
 		}
 
-		public static string RowsToHTMLTable(List<List<string>> rows)
+		public static string RowsToHtmlTable(List<List<string>> rows)
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.Append("<style type='text/css'>\ntable {\n\tborder-collapse: collapse;\n}\n\n");
+
+
+
+		    sb.Append("<!doctype html><html lang=\"en-us\"><head><meta charset=\"utf-8\" /></head><body>");
+            sb.Append("<style type='text/css'>\ntable {\n\tborder-collapse: collapse;\n}\n\n");
 			sb.Append("table, th, td {\nborder: 1px solid black;\n}\n\n</style>\n");
 			sb.Append("<table>");
 
@@ -68,7 +71,7 @@ namespace ExcelToTable
 					for (int n = 0; n < rows[i].Count; n++)
 					{
 						sb.Append("\n\t\t<th>");
-						sb.Append("\n\t\t\t" + rows[i][n]);
+						sb.Append("\n\t\t\t" + HttpUtility.HtmlEncode(rows[i][n]));
 						sb.Append("\n\t\t</th>");
 					}
 
@@ -81,15 +84,15 @@ namespace ExcelToTable
 					for (int n = 0; n < rows[i].Count; n++)
 					{
 						sb.Append("\n\t\t<td>");
-						sb.Append("\n\t\t\t" + rows[i][n]);
+						sb.Append("\n\t\t\t" + HttpUtility.HtmlEncode(rows[i][n]));
 						sb.Append("\n\t\t</td>");
 					}
 
 					sb.Append("\n\t</tr>");
 				}
 			}
-
-			sb.Append("\n</table>");
+            
+			sb.Append("\n</table></body></html>");
 			return sb.ToString();
 		}
 
@@ -106,11 +109,11 @@ namespace ExcelToTable
 				{
 					if (n == rows[i].Count - 1)
 					{
-						sb.Append(String.Format("\n\t\t\t\"{0}\"", rows[i][n].Replace("\"", "\\\"")));
+						sb.Append($"\n\t\t\t\"{rows[i][n].Replace("\"", "\\\"")}\"");
 					}
 					else
 					{
-						sb.Append(String.Format("\n\t\t\t\"{0}\",", rows[i][n].Replace("\"", "\\\"")));
+						sb.Append($"\n\t\t\t\"{rows[i][n].Replace("\"", "\\\"")}\",");
 					}
 				}
 
@@ -126,13 +129,13 @@ namespace ExcelToTable
 
 		public static string RowsToJSON_ArrayOfObjects(List<List<string>> rows)
 		{
-			StringBuilder sb = new StringBuilder();
+			var sb = new StringBuilder();
 			sb.Append("[\n");
 
-			List<string> keys = new List<string>();
+			var keys = new List<string>();
 			for (int n = 0; n < rows[0].Count; n++)
 			{
-				keys.Add(String.Format("{0}", rows[0][n]));
+				keys.Add($"{rows[0][n]}");
 			}
 
 			for (int i = 1; i < rows.Count; i++)
@@ -141,7 +144,7 @@ namespace ExcelToTable
 
 				for (int n = 0; n < rows[i].Count; n++)
 				{
-					sb.Append(String.Format("\n\t\t\"{0}\" : \"{1}\"", keys[n].Replace("\"", string.Empty), rows[i][n].Replace("\"", "\\\"")));
+					sb.Append($"\n\t\t\"{keys[n].Replace("\"", string.Empty)}\" : \"{rows[i][n].Replace("\"", "\\\"")}\"");
 				}
 
 				sb.Append("\n\t}");
@@ -154,50 +157,50 @@ namespace ExcelToTable
 			return sb.ToString();
 		}
 
-		public static void RowsToExcel(List<List<string>> rows, string OutExcelFileName)
+		public static void RowsToExcel(List<List<string>> rows, string outExcelFileName)
 		{
-			ExcelAutomate.RowsToExcelFile(rows, OutExcelFileName);
+			ExcelAutomate.RowsToExcelFile(rows, outExcelFileName);
 		}
 
 		public static void GenerateOutputFile(string format, List<List<string>> rows, string outfile = null)
 		{
-			string text = null;
+			string text;
 			outfile = outfile ?? GetDefaultOutputFileName(format);
-			if(!System.IO.Path.IsPathRooted(outfile))
+			if(!Path.IsPathRooted(outfile))
 			{
-				outfile = String.Format("{0}\\{1}", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), outfile);
+				outfile = $"{Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)}\\{outfile}";
 			}
 
 			switch (format)
 			{
 				case "wikitable":
 					{
-						text = Utils.RowsToWikiTable(rows);
-						System.IO.File.WriteAllText(outfile, text);
+						text = RowsToWikiTable(rows);
+						File.WriteAllText(outfile, text);
 						break;
 					}
 				case "jsonobjects":
 					{
-						text = Utils.RowsToJSON_ArrayOfObjects(rows);
-						System.IO.File.WriteAllText(outfile, text);
+						text = RowsToJSON_ArrayOfObjects(rows);
+						File.WriteAllText(outfile, text);
 						break;
 					}
 				case "jsonarrays":
 					{
-						text = Utils.RowsToJSON_ArrayOfArrays(rows);
-						System.IO.File.WriteAllText(outfile, text);
+						text = RowsToJSON_ArrayOfArrays(rows);
+						File.WriteAllText(outfile, text);
 						break;
 					}
 				case "excel":
 					{
-						Utils.RowsToExcel(rows, outfile);
+						RowsToExcel(rows, outfile);
 						break;
 					}
-				case "html":
 				default:
 					{
-						text = Utils.RowsToHTMLTable(rows);
-						System.IO.File.WriteAllText(outfile, text);
+                        //includes case "html":
+                        text = RowsToHtmlTable(rows);
+						File.WriteAllText(outfile, text);
 						break;
 					}
 			}
@@ -205,56 +208,46 @@ namespace ExcelToTable
 
 		public static string GetDefaultOutputFileName(string format)
 		{
-			string s = String.Format("output-{0}", DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
+			string s = $"output-{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}";
 
 			switch(format)
 			{
 				case "wikitable":
 					{
-						return String.Format("{0}.txt", s);
+						return $"{s}.txt";
 					}
 				case "jsonobjects":
 					{
-						return String.Format("{0}.objects.json", s);
+						return $"{s}.objects.json";
 					}
 				case "jsonarrays":
 					{
-						return String.Format("{0}.arrays.json", s);
+						return $"{s}.arrays.json";
 					}
 				case "excel":
 					{
-						return String.Format("{0}.xlsx", s);
+						return $"{s}.xlsx";
 					}
-				case "html":
 				default:
 					{
-						return String.Format("{0}.html", s);
+                        //includes case "html":
+                        return $"{s}.html";
 					}
 			}
 		}
  
 		public static SimpleArgParser GetArguments(List<SimpleArg> supportedArgs, string[] args)
 		{
-			SimpleArgParser parser = null;
-
-			//Validate against general rules as specified above.
-			try
-			{
-				parser = new SimpleArgParser(supportedArgs, args);
-			}
-			catch (ArgumentException ex)
-			{
-				throw ex;
-			}
+            //Validate against general rules as specified above.
+		    SimpleArgParser parser = new SimpleArgParser(supportedArgs, args);
 
 			//Fix for filename ->abs filename - for case where app is called via batch file, current path is different
-			if (!System.IO.Path.IsPathRooted(parser.ParsedArguments["-filename"]))
+			if (!Path.IsPathRooted(parser.ParsedArguments["-filename"]))
 			{
-				parser.ParsedArguments["-filename"] = System.IO.Path.GetFullPath(parser.ParsedArguments["-filename"]);
+				parser.ParsedArguments["-filename"] = Path.GetFullPath(parser.ParsedArguments["-filename"]);
 			}
 
 			return parser;
-
 		}
 	}
 }
