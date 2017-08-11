@@ -413,7 +413,7 @@ namespace ExcelToTable
 
 			foreach (var arg in supportedArgs)
 			{
-				sb.Append(arg.Required ? $" {arg.Name} {arg.ExmaplePlaceholder}" : $" {arg.Name} [{arg.ExmaplePlaceholder}]");
+				sb.Append(arg.Required ? $" {arg.Name} {arg.ExampleValuePlaceholder}" : $" {arg.Name} [{arg.ExampleValuePlaceholder}]");
 			}
 
 			Console.WriteLine(sb.ToString());
@@ -563,7 +563,7 @@ namespace ExcelToTable
 
 		public string Description { get; set; }
 
-		public string ExmaplePlaceholder { get; set; }
+		public string ExampleValuePlaceholder { get; set; }
 
 		public SimpleArgType ArgType { get; set; }
 
@@ -584,8 +584,8 @@ namespace ExcelToTable
 		/// </summary>
 		public List<string> ValueRange { get; set; }
 
-		#endregion
-	}
+        #endregion
+    }
 
 	public class WorkSheetCoordinate
 	{

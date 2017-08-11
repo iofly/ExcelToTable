@@ -6,7 +6,7 @@ using System.IO;
 
 namespace ExcelToTable
 {
-	public class Utils
+	public static class Utils
 	{
 		public static string RowsToWikiTable(List<List<string>> rows)
 		{
