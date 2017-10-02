@@ -19,7 +19,7 @@ namespace ExcelToTable
 					Required = true,
 					DefaultValue = null,
 					ArgType = SimpleArgType.ExistingFilename,
-					ExmaplePlaceholder = "excelfilename",
+                    ExampleValuePlaceholder = "excelfilename",
 					Description = "Required. The Microsoft Excel file name"
 				},
 				new SimpleArg
@@ -29,7 +29,7 @@ namespace ExcelToTable
 					Required = false,
 					DefaultValue = null,
 					ArgType = SimpleArgType.String,
-					ExmaplePlaceholder = "outputfilename",
+                    ExampleValuePlaceholder = "outputfilename",
 					Description = "Optional. Output file. Defaults to [excelfilename] with format specific extension appended."
 				},
 				new SimpleArg
@@ -39,7 +39,7 @@ namespace ExcelToTable
 					Required = false,
 					DefaultValue = "html",
 					ArgType = SimpleArgType.ValueRange,
-					ExmaplePlaceholder = "html|wikitable|jsonsobjects|jsonarrays|excel",
+                    ExampleValuePlaceholder = "html|wikitable|jsonsobjects|jsonarrays|excel",
 					Description = "Optional. Output file format [html|wikitable|jsonsobjects|jsonarrays|excel]. Defaults to html.",
 					ValueRange = {"html", "wikitable", "jsonsobjects", "jsonarrays", "excel"}
 				},
@@ -50,7 +50,7 @@ namespace ExcelToTable
 					Required = false,
 					DefaultValue = 1,
 					ArgType = SimpleArgType.Integer,
-					ExmaplePlaceholder = "1-n",
+                    ExampleValuePlaceholder = "1-n",
 					Description = "Optional. A one-based index of the worksheet to export data from. Defaults to 1."
 				},
 				new SimpleArg
@@ -60,7 +60,7 @@ namespace ExcelToTable
 					Required = false,
 					DefaultValue = null,
 					ArgType = SimpleArgType.ExcelRange,
-					ExmaplePlaceholder = "excelrange",
+                    ExampleValuePlaceholder = "excelrange",
 					Description = "Optional. Excel cell range to export. e.g. A12:C23. Defaults to the worksheet's used extents."
 				}
             };
