@@ -107,14 +107,9 @@ namespace ExcelToTable
 
 				for (int n = 0; n < rows[i].Count; n++)
 				{
-					if (n == rows[i].Count - 1)
-					{
-						sb.Append($"\n\t\t\t\"{rows[i][n].Replace("\"", "\\\"")}\"");
-					}
-					else
-					{
-						sb.Append($"\n\t\t\t\"{rows[i][n].Replace("\"", "\\\"")}\",");
-					}
+				    sb.Append(n == rows[i].Count - 1
+				        ? $"\n\t\t\t\"{rows[i][n].Replace("\"", "\\\"")}\""
+				        : $"\n\t\t\t\"{rows[i][n].Replace("\"", "\\\"")}\",");
 				}
 
 				sb.Append("\n\t]");
@@ -208,7 +203,7 @@ namespace ExcelToTable
 
 		public static string GetDefaultOutputFileName(string format)
 		{
-			string s = $"output-{DateTime.Now.ToString("yyyy-MM-dd_HHmmss")}";
+			var s = $"output-{DateTime.Now:yyyy-MM-dd_HHmmss}";
 
 			switch(format)
 			{

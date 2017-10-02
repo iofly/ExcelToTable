@@ -29,7 +29,7 @@ namespace ExcelToTable
 
 			try
 			{
-				xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.get_Item(worksheet);
+				xlWorkSheet = (Worksheet)xlWorkBook.Worksheets.Item[worksheet];
 				Range range;
 				if (wsrc==null)
 				{
